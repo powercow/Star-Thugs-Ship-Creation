@@ -6,7 +6,6 @@ function system(args) {
 	this.dr = args.dr;
 	this.special = args.special;
 	this.type = args.type;
-	this.thrust = args.thrust;
 	this.modify = args.modify;
 	this.unmodify = args.unmodify;
 	this.specialNum = args.specialNum;
@@ -86,6 +85,8 @@ function ship()
 	this.totalSlots = 0;
 	this.thrust = 0;
 	this.totalCost = 0;
+	this.shields = 0;
+	this.shieldRegen = 0;
 	this.calculateSpeed = function()
 	{
 		return Math.ceil(this.thrust/this.calculateSize());
@@ -195,6 +196,23 @@ typeCosts["Engine"]=500;
 var oldValues = new Array();
 var oldMissileValues = new Array();
 
+function genShieldModify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields + max*multi;
+		ship.shieldRegen = ship.shieldRegen + regen*multi;
+	}
+}
+function genShieldUnmodify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields - max*multi;
+		ship.shieldRegen = ship.shieldRegen - regen*multi;
+	}
+}
+
 
 var systems = new Array();
 systems[0]=new system({type:"Weapon", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
@@ -240,6 +258,16 @@ systems[39]=new system({type:"Armor", name:"Magmasteel Armor", price:10000, hp:1
 systems[40]=new system({type:"Armor", name:"Blackgel Armor", price:8000, hp:15, special:"DR %s vs. Kinetic and %t vs. Explosive Weapons",specialNum:3, specialNum2:5});
 systems[41]=new system({type:"None", price:0, name:"Empty"});
 systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
+systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1)});
+systems[44]=new system({type:"Shield", price:10000, name:"Mikta Generator", hp:8, modify:genShieldModify(20,2), unmodify:genShieldUnmodify(20,2)});
+systems[45]=new system({type:"Shield", name:"Terecta Combat Generator", price:75000, hp:8, modify:genShieldModify(60,4), unmodify:genShieldUnmodify(60,4)});
+systems[46]=new system({type:"Shield", name:"Rattica Support Generator", price:6000, hp:8, modify:genShieldModify(0,8), unmodify:genShieldUnmodify(0,8)});
+systems[47]=new system({type:"Shield", name:"Mantis Generator", price:7500, hp:8, modify:genShieldModify(16,2), unmodify:genShieldUnmodify(16,2)});
+systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp:8, modify:genShieldModify(40,8), unmodify:genShieldUnmodify(40,8)});
+systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14)});
+systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20)});
+systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20)});
+
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -391,7 +419,7 @@ function calculateSizeValue(size)
 
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense();
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen;
 }
 
 function canAddCore()
