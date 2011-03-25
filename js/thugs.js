@@ -85,8 +85,6 @@ function ship()
 	this.shieldRegen = 0;
 	this.cargo = 0;
 	this.crew = 0;
-	this.baseCrew = 0;
-	this.baseCargo = 0;
 	this.calculateSpeed = function()
 	{
 		return Math.ceil(this.thrust/this.calculateSize());
@@ -102,8 +100,7 @@ function ship()
 		{
 			size = Math.ceil(Math.ceil(((this.totalSlots - 40)/10))+8);
 		}
-		this.size = size;
-		return this.size;
+		return size;
 	}
 	this.calculateBaseCrew = function()
 	{
@@ -437,7 +434,7 @@ function calculateSizeValue(size)
 
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew());
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew());
 }
 
 function canAddCore()
