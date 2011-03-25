@@ -83,6 +83,10 @@ function ship()
 	this.totalCost = 0;
 	this.shields = 0;
 	this.shieldRegen = 0;
+	this.cargo = 0;
+	this.crew = 0;
+	this.baseCrew = 0;
+	this.baseCargo = 0;
 	this.calculateSpeed = function()
 	{
 		return Math.ceil(this.thrust/this.calculateSize());
@@ -100,6 +104,14 @@ function ship()
 		}
 		this.size = size;
 		return this.size;
+	}
+	this.calculateBaseCrew = function()
+	{
+		return (this.calculateSize() + 2);
+	}
+	this.calculateBaseCargo = function()
+	{
+		return (this.calculateSize());
 	}
 	this.addSlot = function(type, multi)
 	{
@@ -262,7 +274,14 @@ systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp
 systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:80,specialNum2:14});
 systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:20});
 systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:120,specialNum2:20});
-
+systems[52]=new system({type:"Cargo", name:"Cargo Bay", price:400, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[53]=new system({type:"Cargo", name:"Autoloading Bay", price:8000, hp:8, modify:function(multi){ship.cargo = ship.cargo + 4*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 4*multi;}});
+systems[54]=new system({type:"Cargo", name:"Armored Cargo Bay", price:10000, hp:16, dr:2, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[55]=new system({type:"Cargo", name:"Livestock Bay", price:1200, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[56]=new system({type:"Cargo", name:"Refrigeration Bay", price:1200, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, modify:function(multi){ship.crew = ship.crew + 2*multi;}, unmodify:function(multi){ship.crew = ship.crew - 2*multi;}});
+systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
+systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -343,10 +362,10 @@ function removeSlot(id)
 	var select ="";	
 	ship.totalCost=ship.totalCost-calculateSizeValue(ship.calculateSize());
 	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
-	ship.totalCost = ship.totalCost - systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].price*multi;
-	if(systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].unmodify!=undefined)
+	ship.totalCost = ship.totalCost - systems[value].price*multi;
+	if(systems[value].unmodify!=undefined)
 	{
-		systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].unmodify(multi);
+		systems[value].unmodify(multi);
 	}
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
@@ -418,7 +437,7 @@ function calculateSizeValue(size)
 
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen;
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew());
 }
 
 function canAddCore()
