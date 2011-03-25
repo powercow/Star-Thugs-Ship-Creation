@@ -244,7 +244,6 @@ systems[38]=new system({type:"Armor", name:"Polychromite Armor", price:60000, hp
 systems[39]=new system({type:"Armor", name:"Magmasteel Armor", price:10000, hp:18, dr:1, special:"DR %s vs. Plasma Weapons",specialNum:6});
 systems[40]=new system({type:"Armor", name:"Blackgel Armor", price:8000, hp:15, special:"DR %s vs. Kinetic and %t vs. Explosive Weapons",specialNum:3, specialNum2:5});
 systems[41]=new system({type:"None", price:0, name:"Empty"});
-systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
 
 function genShieldModify(max, regen)
 {
@@ -279,10 +278,31 @@ systems[56]=new system({type:"Cargo", name:"Refrigeration Bay", price:1200, hp:8
 systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, modify:function(multi){ship.crew = ship.crew + 2*multi;}, unmodify:function(multi){ship.crew = ship.crew - 2*multi;}});
 systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
 systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
+systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
+systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}});
+systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}});
+systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, additionalDisplay:"Fires 3/turn"});
+systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, additionalDisplay:"Fires 3/round"});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
 missiles[1]=new missile({name:"Hornet",price:150,toHit:5,damage:7});
+missiles[2]=new missile({name:"Wasp",price:300,toHit:4,damage:9});
+missiles[3]=new missile({name:"Cyclone",price:1000,toHit:2,damage:12});
+missiles[4]=new missile({name:"Lance",price:650,toHit:5,damage:16});
+missiles[5]=new missile({name:"Typhoon",price:1200,toHit:3,damage:18});
+missiles[6]=new missile({name:"Rapier",price:5000,toHit:1,damage:16,special:"bypasses first armor system it hits, ignores up to 15 points of shields"});
+missiles[7]=new missile({name:"Medusa Shield Disruptor",price:1000,toHit:5,damage:0,special:"Inflicts 20 damage to shields on facing and 10 damage to shields on adjacent facings"});
+missiles[8]=new missile({name:"Hammrhead",price:2000,toHit:8,damage:40});
+missiles[9]=new missile({name:"Mace",price:350,toHit:5,damage:8,special:"bypasses first armor system"});
+missiles[10]=new missile({name:"Achilles",price:500,toHit:7,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
+missiles[11]=new missile({name:"Police Achilles",price:2000,toHit:4,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
+missiles[12]=new missile({name:"Parasite Tracking",price:1000,toHit:1,damage:0,special:"no damage, emits tracking signal"});
+missiles[13]=new missile({name:"MK XII Interceptor",price:3500,toHit:2,damage:26});
+missiles[14]=new missile({name:"Guardian Anti-Missile",price:300,toHit:-1,damage:0,special:"Hits incoming missile on roll under incoming missile’s to-hit roll"});
+missiles[15]=new missile({name:"Screambat Cluster Pack",price:800,toHit:3,damage:5,special:"Four missiles in pack"});
+missiles[16]=new missile({name:"Antimatter Torpedo",price:400,toHit:-1,damage:16,special:"Direct fire, -2 to hit"});
+missiles[17]=new missile({name:"Military-Grade",price:15000,toHit:0,damage:30,special:"bypasses first armor system and up to 30 points of shields"});
 
 function populateSlotDropdown(id)
 {
