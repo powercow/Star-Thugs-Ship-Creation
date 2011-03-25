@@ -28,10 +28,6 @@ function system(args) {
 			pants+="<b>Name:</b> Super Heavy "+this.name+"<br/>";
 		}
 		pants+="<b>Price:</b> $"+this.price*multi+"<br/>";
-		if(this.speed>0)
-		{
-			pants+="<b>Thrust:</b> "+this.speed*multi+"<br/>";
-		}
 		if(this.damage>0)
 		{
 			pants+="<b>Damage:</b> D"+this.damage*multi+"<br/>";
@@ -196,24 +192,6 @@ typeCosts["Engine"]=500;
 var oldValues = new Array();
 var oldMissileValues = new Array();
 
-function genShieldModify(max, regen)
-{
-	return function(multi)
-	{
-		ship.shields = ship.shields + max*multi;
-		ship.shieldRegen = ship.shieldRegen + regen*multi;
-	}
-}
-function genShieldUnmodify(max, regen)
-{
-	return function(multi)
-	{
-		ship.shields = ship.shields - max*multi;
-		ship.shieldRegen = ship.shieldRegen - regen*multi;
-	}
-}
-
-
 var systems = new Array();
 systems[0]=new system({type:"Weapon", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
 systems[1]=new system({type:"Weapon", name:"18 MW Laser Cannon", price:2500, damage:5, hp:8, special:"Sustained Fire %s", specialNum:1});
@@ -258,15 +236,32 @@ systems[39]=new system({type:"Armor", name:"Magmasteel Armor", price:10000, hp:1
 systems[40]=new system({type:"Armor", name:"Blackgel Armor", price:8000, hp:15, special:"DR %s vs. Kinetic and %t vs. Explosive Weapons",specialNum:3, specialNum2:5});
 systems[41]=new system({type:"None", price:0, name:"Empty"});
 systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
-systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1)});
-systems[44]=new system({type:"Shield", price:10000, name:"Mikta Generator", hp:8, modify:genShieldModify(20,2), unmodify:genShieldUnmodify(20,2)});
-systems[45]=new system({type:"Shield", name:"Terecta Combat Generator", price:75000, hp:8, modify:genShieldModify(60,4), unmodify:genShieldUnmodify(60,4)});
-systems[46]=new system({type:"Shield", name:"Rattica Support Generator", price:6000, hp:8, modify:genShieldModify(0,8), unmodify:genShieldUnmodify(0,8)});
-systems[47]=new system({type:"Shield", name:"Mantis Generator", price:7500, hp:8, modify:genShieldModify(16,2), unmodify:genShieldUnmodify(16,2)});
-systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp:8, modify:genShieldModify(40,8), unmodify:genShieldUnmodify(40,8)});
-systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14)});
-systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20)});
-systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20)});
+
+function genShieldModify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields + max*multi;
+		ship.shieldRegen = ship.shieldRegen + regen*multi;
+	}
+}
+function genShieldUnmodify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields - max*multi;
+		ship.shieldRegen = ship.shieldRegen - regen*multi;
+	}
+}
+systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:10,specialNum2:1});
+systems[44]=new system({type:"Shield", price:10000, name:"Mikta Generator", hp:8, modify:genShieldModify(20,2), unmodify:genShieldUnmodify(20,2),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:20,specialNum2:2});
+systems[45]=new system({type:"Shield", name:"Terecta Combat Generator", price:75000, hp:8, modify:genShieldModify(60,4), unmodify:genShieldUnmodify(60,4),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:60,specialNum2:4});
+systems[46]=new system({type:"Shield", name:"Rattica Support Generator", price:6000, hp:8, modify:genShieldModify(0,8), unmodify:genShieldUnmodify(0,8),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:8});
+systems[47]=new system({type:"Shield", name:"Mantis Generator", price:7500, hp:8, modify:genShieldModify(16,2), unmodify:genShieldUnmodify(16,2),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:16,specialNum2:2});
+systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp:8, modify:genShieldModify(40,8), unmodify:genShieldUnmodify(40,8),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:40,specialNum2:8});
+systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:80,specialNum2:14});
+systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:20});
+systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:120,specialNum2:20});
 
 
 var missiles = new Array();
@@ -349,6 +344,10 @@ function removeSlot(id)
 	ship.totalCost=ship.totalCost-calculateSizeValue(ship.calculateSize());
 	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
 	ship.totalCost = ship.totalCost - systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].price*multi;
+	if(systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].unmodify!=undefined)
+	{
+		systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].unmodify(multi);
+	}
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
