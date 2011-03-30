@@ -1,4 +1,5 @@
-function system(args) {
+function system(args) 
+{
 	this.name = args.name;
 	this.price = args.price;
 	this.damage = args.damage;
@@ -278,11 +279,11 @@ systems[56]=new system({type:"Cargo", name:"Refrigeration Bay", price:1200, hp:8
 systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, modify:function(multi){ship.crew = ship.crew + 2*multi;}, unmodify:function(multi){ship.crew = ship.crew - 2*multi;}});
 systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
 systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
-systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
-systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}});
-systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}});
-systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, additionalDisplay:"Fires 3/turn"});
-systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, additionalDisplay:"Fires 3/round"});
+systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
+systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/round"});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -373,7 +374,6 @@ function addSlot(id)
 
 function removeSlot(id)
 {
-	removeMissileRack(id);
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var select ="";	
@@ -382,7 +382,7 @@ function removeSlot(id)
 	ship.totalCost = ship.totalCost - systems[value].price*multi;
 	if(systems[value].unmodify!=undefined)
 	{
-		systems[value].unmodify(multi);
+		systems[value].unmodify(multi, id);
 	}
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
@@ -393,7 +393,6 @@ function removeSlot(id)
 
 function onSlotChange(id)
 {
-	removeMissileRack(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var multi = getSlotSize(id);
 	if(oldValues[id]!=null)
@@ -401,7 +400,7 @@ function onSlotChange(id)
 		ship.totalCost = ship.totalCost - systems[oldValues[id]].price*multi;
 		if(systems[oldValues[id]].unmodify!=null)
 		{			
-			systems[oldValues[id]].unmodify(multi);
+			systems[oldValues[id]].unmodify(multi, id);
 		}
 	}
 	oldValues[id]=value;
