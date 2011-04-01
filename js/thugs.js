@@ -84,11 +84,21 @@ function ship()
 	this.totalCost = 0;
 	this.shields = 0;
 	this.shieldRegen = 0;
+	this.shieldSystems = 0;
 	this.cargo = 0;
 	this.crew = 0;
+	this.sensors = 0;
+	this.calculateRegen = function()
+	{
+		return this.shieldRegen;
+	}
+	this.calculateThrust = function()
+	{
+		return this.thrust;
+	}
 	this.calculateSpeed = function()
 	{
-		return Math.ceil(this.thrust/this.calculateSize());
+		return Math.ceil(this.calculateThrust()/this.calculateSize());
 	}
 	this.calculateDefense = function()
 	{
@@ -111,6 +121,7 @@ function ship()
 	{
 		return (this.calculateSize());
 	}
+	this.calculateSizeValue = calculateSizeValue;
 	this.addSlot = function(type, multi)
 	{
 		this.totalSlots=this.totalSlots+multi;
@@ -256,6 +267,7 @@ function genShieldModify(max, regen)
 	{
 		ship.shields = ship.shields + max*multi;
 		ship.shieldRegen = ship.shieldRegen + regen*multi;
+		ship.shieldSystems += 1;
 	}
 }
 function genShieldUnmodify(max, regen)
@@ -264,6 +276,7 @@ function genShieldUnmodify(max, regen)
 	{
 		ship.shields = ship.shields - max*multi;
 		ship.shieldRegen = ship.shieldRegen - regen*multi;
+		ship.shieldSystems -= 1;
 	}
 }
 systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:10,specialNum2:1});
@@ -288,7 +301,75 @@ systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8
 systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
 systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/round"});
-systems[64]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads a vulcan or howitzer once per battle"});
+systems[64]=new system({type:"Special", name:"High-Grade Sensor Array", price:500, special:"Intensity 2", modify:function(){ship.sensors += 2;}, unmodify:function(){ship.sensors -= 2;}});
+systems[65]=new system({type:"Special", name:"Advanced Sensor Array", price:15000, special:"Intensity 4<br/>un-Bend one scanner or targeter per turn", modify:function(){ship.sensors += 4;},unmodify:function(){ship.sensors -= 4;}});
+systems[66]=new system({type:"Special", name:"Hyper Sensor Array", price:150000, special:"Intensity 8<br/>un-Bend 2 scanners or targeters per turn", modify:function(){ship.sensors += 8;},unmodify:function(){ship.sensors -= 8;}});
+systems[67]=new system({type:"Special", name:"Ground Scanner", price:500, special:"Intensity +3 for scanning planet surface"});
+systems[68]=new system({type:"Special", name:"Combat Scanner", price:500, special:"BEND to add Intensity to missile or direct-fire to-hit roll"});
+systems[69]=new system({type:"Special", name:"Auxiliary Radar", price:5000, special:"Intensity +1", modify:function(){ship.sensors += 1;},unmodify:function(){ship.sensors -= 1;}});
+systems[70]=new system({type:"Special", name:"Structural Scanner", price:8000, special:"BEND when hitting a ship to skip first layer of armor.<br/>req. Intensity 2+"});
+systems[71]=new system({type:"Special", name:"Vector Interpolation Chip", price:4000, special:"BEND to reduce ship's defense by Intensity (min 0)"});
+systems[72]=new system({type:"Special", name:"Target Verification System", price:2500, special:"+1 to hit with all missiles"});
+systems[73]=new system({type:"Special", name:"Terminal Guidance Control", price:15000, special:"+2 to hit with all missiles"});
+systems[74]=new system({type:"Special", name:"Sensor Control Computer", price:4000, special:"Intensitt +1", modify:function(){ship.sensors += 1;},unmodify:function(){ship.sensors -= 1;}});
+systems[75]=new system({type:"Special", name:"Master Targeting Computer", price:8000, special:"+1 to hit with all non-missile weapons"});
+systems[76]=new system({type:"Special", name:"Automated Weapon Targeter", price:500, special:"BEND for +2 to hit or +2 damage to a single weapon"});
+systems[77]=new system({type:"Special", name:"Racing Chip", price:5000, special:"Thrust increases 20%, doubles fuel consumption", modify:function(){ship.calculateThrust=function(){return this.thrust * 1.2;};},unmodify:function(){ship.calculateThrust=function(){return this.thrust;};}});
+systems[78]=new system({type:"Special", name:"Fuel Distribution Chip", price:500, special:"+1 Thrust, Reduces Size by 1 for calculating fuel consumption", modify:function(){ship.thrust += 1;},unmodify:function(){ship.thrust -= 1;}});
+systems[79]=new system({type:"Special", name:"Shield Manifold Regulator", price:8000, special:"All shields gain DR 1 on facings with 3+ shield points when hit"});
+
+// I tried this, but it turns out that oldValues doesn't always hold a list of current systems on the ship.
+// Testing it, it worked up until I removed the slot with a shield system in it, after that, the number was skewed up by 1.
+// Instead, added shieldSystems to ship.
+function bfcCalcRegen()
+{
+	var shieldsys = 0;
+	for (key in oldValues)
+	{
+		if (systems[oldValues[key]].type == 'Shield')
+			shieldsys += 1;
+	}
+	return this.shieldRegen + shieldsys;
+}
+systems[80]=new system({type:"Special", name:"Bridge Flow Controller", price:15000, special:"+1 damage to all laser/plasma weapons, +1 Regen per shield generator", modify:function(){ship.calculateRegen = function(){return this.shieldRegen + this.shieldSystems;};},unmodify:function(){ship.calculateRegen = function(){return this.shieldRegen;};}});
+systems[81]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads vulcan/howitzer weapon once per battle"});
+systems[82]=new system({type:"Special", name:"Prysm Coil", price:2000, special:"+3 damage to linked laser weapon, destoryed if linked laser is damaged"});
+
+function ufMod()
+{
+	ship.calculateSpeed = function()
+	{
+		var num = 0;
+		if(this.calculateSize() > 1)
+			num = 1;
+		return Math.ceil(this.calculateThrust()/(this.calculateSize()-num));
+	};
+	ship.totalCost -= ship.calculateSizeValue();
+	ship.calculateSizeValue=function(){return calculateSizeValue() + 2000*ship.calculateSize();};
+	ship.totalCost += ship.calculateSizeValue();
+	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+}
+function ufunMod()
+{
+	ship.calculateSpeed = function(){return Math.ceil(this.calculateThrust()/this.calculateSize());};
+	ship.totalCost -= ship.calculateSizeValue();
+	ship.calculateSizeValue = calculateSizeValue;
+	ship.totalCost += ship.calculateSizeValue();
+	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+}
+systems[83]=new system({type:"Special", name:"Ultralight Frame", price:4000, special:"Costs $2000 extra per size value<br/>Reduces size by 1 for purposes of determining speed<br/>All systems take 1 more damage when hit", modify:ufMod, unmodify:ufunMod});
+
+// Tank Frame 6,000 + 3,000 per size level. Increaseses size by 1 for purposes of determining speed. All systems gain +2 Damage Reduction.
+// |\|Uk3z0r Chip 25,000 BEND when hacking a ship to hack all computer systems simultaneously
+// Point Defense Array 2,000 + 1,000 per size level, destroys missiles on a roll of 10+
+// Heavy Point Defense Array 8,000 + 3,000 per size level, takes up a weapon and special system slot, destroys missiles on a roll of 6+
+// Sensor Scrambler 2,000 + 1,000 per size level, -2 enemy sensor intensity
+// Stealth Coat 5,000 + 2,000 per size level, -2 enemy sensor intensity, if enemy intensity <1 then -2 to hit at medium range, -4 at long and
+// with missiles
+// Polychromatic Shield Fuel 100 per point of shield max, +1 damage reduction vs. lasers for every 10 shield points
+// Titan Shield Fuel 300 per point of shield max, +1 damage reduction for every 10 shield points
+// Military Shield Fuel 1,000 per point of shield max, +1 damage reduction for every 10 shield points, shield points absorb 2 damage each
+// Automated Shield Distributor 1,500 Unlimited shield redirection
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -397,9 +478,9 @@ function addSlot(id)
 	$("#"+id).append(select);
 	i++;
 	ship.totalCost = ship.totalCost + typeCosts[value]*multi;		
-	ship.totalCost = ship.totalCost - calculateSizeValue(ship.calculateSize());
+	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
 	ship.addSlot(id, multi);
-	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
+	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
 	populateSpecials();
 	populateShipInfo();	
@@ -410,7 +491,7 @@ function removeSlot(id)
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var select ="";	
-	ship.totalCost=ship.totalCost-calculateSizeValue(ship.calculateSize());
+	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
 	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
 	ship.totalCost = ship.totalCost - systems[value].price*multi;
 	if(systems[value].unmodify!=undefined)
@@ -418,7 +499,7 @@ function removeSlot(id)
 		systems[value].unmodify(multi, id);
 	}
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
-	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
+	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
 	$("#slot"+id).remove();
 	populateSpecials();
@@ -469,8 +550,9 @@ function getSlotSize(id)
 	}
 }
 
-function calculateSizeValue(size)
+function calculateSizeValue()
 {
+	size = ship.calculateSize();
 	if(size==0)
 	{
 		return 0;
@@ -487,7 +569,7 @@ function calculateSizeValue(size)
 
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew());
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors;
 }
 
 function canAddCore()
