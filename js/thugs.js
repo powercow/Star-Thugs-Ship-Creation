@@ -6,7 +6,6 @@ function system(args) {
 	this.dr = args.dr;
 	this.special = args.special;
 	this.type = args.type;
-	this.thrust = args.thrust;
 	this.modify = args.modify;
 	this.unmodify = args.unmodify;
 	this.specialNum = args.specialNum;
@@ -29,10 +28,6 @@ function system(args) {
 			pants+="<b>Name:</b> Super Heavy "+this.name+"<br/>";
 		}
 		pants+="<b>Price:</b> $"+this.price*multi+"<br/>";
-		if(this.speed>0)
-		{
-			pants+="<b>Thrust:</b> "+this.speed*multi+"<br/>";
-		}
 		if(this.damage>0)
 		{
 			pants+="<b>Damage:</b> D"+this.damage*multi+"<br/>";
@@ -86,6 +81,10 @@ function ship()
 	this.totalSlots = 0;
 	this.thrust = 0;
 	this.totalCost = 0;
+	this.shields = 0;
+	this.shieldRegen = 0;
+	this.cargo = 0;
+	this.crew = 0;
 	this.calculateSpeed = function()
 	{
 		return Math.ceil(this.thrust/this.calculateSize());
@@ -101,8 +100,15 @@ function ship()
 		{
 			size = Math.ceil(Math.ceil(((this.totalSlots - 40)/10))+8);
 		}
-		this.size = size;
-		return this.size;
+		return size;
+	}
+	this.calculateBaseCrew = function()
+	{
+		return (this.calculateSize() + 2);
+	}
+	this.calculateBaseCargo = function()
+	{
+		return (this.calculateSize());
 	}
 	this.addSlot = function(type, multi)
 	{
@@ -134,7 +140,10 @@ function ship()
 	}
 	this.removeSlot = function(type, multi)
 	{
-		this.totalSlots=this.totalSlots-multi;
+		if(type!="special")
+		{
+			this.totalSlots=this.totalSlots-multi;
+		}
 		if(type=='front')
 		{
 			this.frontSlots=this.frontSlots-multi;
@@ -191,10 +200,10 @@ typeCosts["Cargo"]=0;
 typeCosts["Weapon"]=500;
 typeCosts["Shield"]=500;
 typeCosts["Engine"]=500;
+typeCosts["specialSlot"]=0;
 
 var oldValues = new Array();
 var oldMissileValues = new Array();
-
 
 var systems = new Array();
 systems[0]=new system({type:"Weapon", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
@@ -239,11 +248,66 @@ systems[38]=new system({type:"Armor", name:"Polychromite Armor", price:60000, hp
 systems[39]=new system({type:"Armor", name:"Magmasteel Armor", price:10000, hp:18, dr:1, special:"DR %s vs. Plasma Weapons",specialNum:6});
 systems[40]=new system({type:"Armor", name:"Blackgel Armor", price:8000, hp:15, special:"DR %s vs. Kinetic and %t vs. Explosive Weapons",specialNum:3, specialNum2:5});
 systems[41]=new system({type:"None", price:0, name:"Empty"});
+
+function genShieldModify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields + max*multi;
+		ship.shieldRegen = ship.shieldRegen + regen*multi;
+	}
+}
+function genShieldUnmodify(max, regen)
+{
+	return function(multi)
+	{
+		ship.shields = ship.shields - max*multi;
+		ship.shieldRegen = ship.shieldRegen - regen*multi;
+	}
+}
+systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:10,specialNum2:1});
+systems[44]=new system({type:"Shield", price:10000, name:"Mikta Generator", hp:8, modify:genShieldModify(20,2), unmodify:genShieldUnmodify(20,2),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:20,specialNum2:2});
+systems[45]=new system({type:"Shield", name:"Terecta Combat Generator", price:75000, hp:8, modify:genShieldModify(60,4), unmodify:genShieldUnmodify(60,4),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:60,specialNum2:4});
+systems[46]=new system({type:"Shield", name:"Rattica Support Generator", price:6000, hp:8, modify:genShieldModify(0,8), unmodify:genShieldUnmodify(0,8),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:8});
+systems[47]=new system({type:"Shield", name:"Mantis Generator", price:7500, hp:8, modify:genShieldModify(16,2), unmodify:genShieldUnmodify(16,2),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:16,specialNum2:2});
+systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp:8, modify:genShieldModify(40,8), unmodify:genShieldUnmodify(40,8),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:40,specialNum2:8});
+systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:80,specialNum2:14});
+systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:20});
+systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:120,specialNum2:20});
+systems[52]=new system({type:"Cargo", name:"Cargo Bay", price:400, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[53]=new system({type:"Cargo", name:"Autoloading Bay", price:8000, hp:8, modify:function(multi){ship.cargo = ship.cargo + 4*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 4*multi;}});
+systems[54]=new system({type:"Cargo", name:"Armored Cargo Bay", price:10000, hp:16, dr:2, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[55]=new system({type:"Cargo", name:"Livestock Bay", price:1200, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[56]=new system({type:"Cargo", name:"Refrigeration Bay", price:1200, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
+systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, modify:function(multi){ship.crew = ship.crew + 2*multi;}, unmodify:function(multi){ship.crew = ship.crew - 2*multi;}});
+systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
+systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
 systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}});
+systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}});
+systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}});
+systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, additionalDisplay:"Fires 3/turn"});
+systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, additionalDisplay:"Fires 3/round"});
+systems[64]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads a vulcan or howitzer once per battle"});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
 missiles[1]=new missile({name:"Hornet",price:150,toHit:5,damage:7});
+missiles[2]=new missile({name:"Wasp",price:300,toHit:4,damage:9});
+missiles[3]=new missile({name:"Cyclone",price:1000,toHit:2,damage:12});
+missiles[4]=new missile({name:"Lance",price:650,toHit:5,damage:16});
+missiles[5]=new missile({name:"Typhoon",price:1200,toHit:3,damage:18});
+missiles[6]=new missile({name:"Rapier",price:5000,toHit:1,damage:16,special:"bypasses first armor system it hits, ignores up to 15 points of shields"});
+missiles[7]=new missile({name:"Medusa Shield Disruptor",price:1000,toHit:5,damage:0,special:"Inflicts 20 damage to shields on facing and 10 damage to shields on adjacent facings"});
+missiles[8]=new missile({name:"Hammrhead",price:2000,toHit:8,damage:40});
+missiles[9]=new missile({name:"Mace",price:350,toHit:5,damage:8,special:"bypasses first armor system"});
+missiles[10]=new missile({name:"Achilles",price:500,toHit:7,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
+missiles[11]=new missile({name:"Police Achilles",price:2000,toHit:4,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
+missiles[12]=new missile({name:"Parasite Tracking",price:1000,toHit:1,damage:0,special:"no damage, emits tracking signal"});
+missiles[13]=new missile({name:"MK XII Interceptor",price:3500,toHit:2,damage:26});
+missiles[14]=new missile({name:"Guardian Anti-Missile",price:300,toHit:-1,damage:0,special:"Hits incoming missile on roll under incoming missile?s to-hit roll"});
+missiles[15]=new missile({name:"Screambat Cluster Pack",price:800,toHit:3,damage:5,special:"Four missiles in pack"});
+missiles[16]=new missile({name:"Antimatter Torpedo",price:400,toHit:-1,damage:16,special:"Direct fire, -2 to hit"});
+missiles[17]=new missile({name:"Military-Grade",price:15000,toHit:0,damage:30,special:"bypasses first armor system and up to 30 points of shields"});
 
 function populateSlotDropdown(id)
 {
@@ -256,6 +320,33 @@ function populateSlotDropdown(id)
 	}
 	select+="</select><a href=\"#\" onclick=\"addSlot('"+id+"');\">add</a> ";
 	$("#"+id).append(select);
+}
+
+function populateSpecials()
+{
+	var sselect = "";
+	if($("#special .specialSlot").length < ship.calculateSize())
+	{
+		for(x=$("#special .specialSlot").length; x<ship.calculateSize(); x++)
+		{
+			sselect+="<div id=\"slot"+i+"\" class=\"specialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
+			for(y=0; y<systems.length;y++)
+			{
+				if(systems[y].type=="Special")
+				{
+					sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
+				}
+			}
+			sselect+="</select></div>";
+			$("#special").append(sselect);
+			i++;		
+		}
+	}
+	else if($("#special select").length > ship.calculateSize())
+	{		
+		removeSlot($("#special .specialSlot:last")[0].id.substr(4));
+	}
+	
 }
 
 function addSlot(id)
@@ -296,7 +387,7 @@ function addSlot(id)
 	select += "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 	for(x=0; x<systems.length; x++)
 	{
-		if(systems[x].type==value)
+		if(systems[x].type==value || (value=="Universal" && x!=41))
 		{
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
@@ -309,7 +400,8 @@ function addSlot(id)
 	ship.addSlot(id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
-	populateShipInfo();
+	populateSpecials();
+	populateShipInfo();	
 }
 
 function removeSlot(id)
@@ -320,12 +412,17 @@ function removeSlot(id)
 	var select ="";	
 	ship.totalCost=ship.totalCost-calculateSizeValue(ship.calculateSize());
 	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
-	ship.totalCost = ship.totalCost - systems[document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value].price*multi;
+	ship.totalCost = ship.totalCost - systems[value].price*multi;
+	if(systems[value].unmodify!=undefined)
+	{
+		systems[value].unmodify(multi);
+	}
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
-	populateShipInfo();
 	$("#slot"+id).remove();
+	populateSpecials();
+	populateShipInfo();	
 }
 
 function onSlotChange(id)
@@ -391,7 +488,7 @@ function calculateSizeValue(size)
 
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size:"+ship.calculateSize()+"<br/>("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense();
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.thrust+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.shieldRegen + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew());
 }
 
 function canAddCore()
