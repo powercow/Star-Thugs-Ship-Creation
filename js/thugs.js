@@ -141,7 +141,10 @@ function ship()
 	}
 	this.removeSlot = function(type, multi)
 	{
-		this.totalSlots=this.totalSlots-multi;
+		if(type!="special")
+		{
+			this.totalSlots=this.totalSlots-multi;
+		}
 		if(type=='front')
 		{
 			this.frontSlots=this.frontSlots-multi;
@@ -198,6 +201,7 @@ typeCosts["Cargo"]=0;
 typeCosts["Weapon"]=500;
 typeCosts["Shield"]=500;
 typeCosts["Engine"]=500;
+typeCosts["specialSlot"]=0;
 
 var oldValues = new Array();
 var oldMissileValues = new Array();
@@ -284,6 +288,7 @@ systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8
 systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
 systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/round"});
+systems[64]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads a vulcan or howitzer once per battle"});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -316,6 +321,33 @@ function populateSlotDropdown(id)
 	}
 	select+="</select><a href=\"#\" onclick=\"addSlot('"+id+"');\">add</a> ";
 	$("#"+id).append(select);
+}
+
+function populateSpecials()
+{
+	var sselect = "";
+	if($("#special .specialSlot").length < ship.calculateSize())
+	{
+		for(x=$("#special .specialSlot").length; x<ship.calculateSize(); x++)
+		{
+			sselect+="<div id=\"slot"+i+"\" class=\"specialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
+			for(y=0; y<systems.length;y++)
+			{
+				if(systems[y].type=="Special")
+				{
+					sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
+				}
+			}
+			sselect+="</select></div>";
+			$("#special").append(sselect);
+			i++;		
+		}
+	}
+	else if($("#special select").length > ship.calculateSize())
+	{		
+		removeSlot($("#special .specialSlot:last")[0].id.substr(4));
+	}
+	
 }
 
 function addSlot(id)
@@ -356,7 +388,7 @@ function addSlot(id)
 	select += "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 	for(x=0; x<systems.length; x++)
 	{
-		if(systems[x].type==value)
+		if(systems[x].type==value || (value=="Universal" && x!=41))
 		{
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
@@ -369,7 +401,8 @@ function addSlot(id)
 	ship.addSlot(id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
-	populateShipInfo();
+	populateSpecials();
+	populateShipInfo();	
 }
 
 function removeSlot(id)
@@ -387,8 +420,9 @@ function removeSlot(id)
 	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 	ship.totalCost=ship.totalCost+calculateSizeValue(ship.calculateSize());
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
-	populateShipInfo();
 	$("#slot"+id).remove();
+	populateSpecials();
+	populateShipInfo();	
 }
 
 function onSlotChange(id)
