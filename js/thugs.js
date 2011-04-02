@@ -88,6 +88,7 @@ function ship()
 	this.cargo = 0;
 	this.crew = 0;
 	this.sensors = 0;
+	this.sizeCostMod = 0;
 	this.calculateRegen = function()
 	{
 		return this.shieldRegen;
@@ -335,7 +336,15 @@ systems[80]=new system({type:"Special", name:"Bridge Flow Controller", price:150
 systems[81]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads vulcan/howitzer weapon once per battle"});
 systems[82]=new system({type:"Special", name:"Prysm Coil", price:2000, special:"+3 damage to linked laser weapon, destoryed if linked laser is damaged"});
 
-function ufMod()
+function modifySizeCost(value)
+{
+	ship.totalCost -= ship.calculateSizeValue();
+	ship.sizeCostMod += value;
+	ship.totalCost += ship.calculateSizeValue();
+	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+}
+
+function ultralightMod()
 {
 	ship.calculateSpeed = function()
 	{
@@ -344,32 +353,36 @@ function ufMod()
 			num = 1;
 		return Math.ceil(this.calculateThrust()/(this.calculateSize()-num));
 	};
-	ship.totalCost -= ship.calculateSizeValue();
-	ship.calculateSizeValue=function(){return calculateSizeValue() + 2000*ship.calculateSize();};
-	ship.totalCost += ship.calculateSizeValue();
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	modifySizeCost(2000);
 }
-function ufunMod()
+function ultralightUnmod()
 {
 	ship.calculateSpeed = function(){return Math.ceil(this.calculateThrust()/this.calculateSize());};
-	ship.totalCost -= ship.calculateSizeValue();
-	ship.calculateSizeValue = calculateSizeValue;
-	ship.totalCost += ship.calculateSizeValue();
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	modifySizeCost(-2000);
 }
-systems[83]=new system({type:"Special", name:"Ultralight Frame", price:4000, special:"Costs $2000 extra per size value<br/>Reduces size by 1 for purposes of determining speed<br/>All systems take 1 more damage when hit", modify:ufMod, unmodify:ufunMod});
+systems[83]=new system({type:"Special", name:"Ultralight Frame", price:4000, special:"Costs $2000 extra per size value<br/>Reduces size by 1 for purposes of determining speed<br/>All systems take 1 more damage when hit", modify:ultralightMod, unmodify:ultralightUnmod});
 
-// Tank Frame 6,000 + 3,000 per size level. Increaseses size by 1 for purposes of determining speed. All systems gain +2 Damage Reduction.
-// |\|Uk3z0r Chip 25,000 BEND when hacking a ship to hack all computer systems simultaneously
-// Point Defense Array 2,000 + 1,000 per size level, destroys missiles on a roll of 10+
-// Heavy Point Defense Array 8,000 + 3,000 per size level, takes up a weapon and special system slot, destroys missiles on a roll of 6+
-// Sensor Scrambler 2,000 + 1,000 per size level, -2 enemy sensor intensity
-// Stealth Coat 5,000 + 2,000 per size level, -2 enemy sensor intensity, if enemy intensity <1 then -2 to hit at medium range, -4 at long and
-// with missiles
-// Polychromatic Shield Fuel 100 per point of shield max, +1 damage reduction vs. lasers for every 10 shield points
-// Titan Shield Fuel 300 per point of shield max, +1 damage reduction for every 10 shield points
-// Military Shield Fuel 1,000 per point of shield max, +1 damage reduction for every 10 shield points, shield points absorb 2 damage each
-// Automated Shield Distributor 1,500 Unlimited shield redirection
+function tankMod()
+{
+	ship.calculateSpeed = function()
+	{
+		var num = 0;
+		if(this.calculateSize() > 1)
+			num = 1;
+		return Math.ceil(this.calculateThrust()/(this.calculateSize()+num));
+	};
+	modifySizeCost(3000);
+}
+function tankUnmod()
+{
+	ship.calculateSpeed = function(){return Math.ceil(this.calculateThrust()/this.calculateSize());};
+	modifySizeCost(-3000);
+}
+systems[83]=new system({type:"Special", name:"Tank Frame", price:6000, special:"Costs $3000 extra per size value<br/>Increaseses size by 1 for purposes of determining speed<br/>All systems gain +2 Damage Reduction", modify:tankMod, unmodify:tankUnmod});
+systems[84]=new system({type:"Special", name:"|\|Uk3z0r Chip", price:25000, special:"BEND when hacking a ship to hack all computer systems simultaneously"});
+systems[85]=new system({type:"Special", name:"Point Defense Array", price:2000, special:"Costs 1,000 extra per size value<br/>destroys missiles on a roll of 10+", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
+systems[86]=new system({type:"Special", name:"Sensor Scrambler", price:2000, special:"Costs 1,000 extra per size value<br/>-2 enemy sensor intensity", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
+systems[87]=new system({type:"Special", name:"Stealth Coat", price:5000, special:"Costs 2000 extra per size value<br/>-2 enemy sensor intensity<br/>if enemy intensity < 1 then -2 to hit at medium, -4 at long and for missiles", modify:function(){modifySizeCost(2000);}, unmodify:function(){modifySizeCost(-2000);}});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
@@ -490,7 +503,7 @@ function removeSlot(id)
 {
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
-	var select ="";	
+	var select ="";
 	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
 	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
 	ship.totalCost = ship.totalCost - systems[value].price*multi;
@@ -559,11 +572,11 @@ function calculateSizeValue()
 	}
 	else if(size<2)
 	{
-		return 500;
+		return 500 + ship.sizeCostMod;
 	}
 	else
 	{
-		return (size-1)*(size-1)*1000;
+		return (size-1)*(size-1)*1000 + ship.sizeCostMod*size;
 	}
 }
 
