@@ -196,6 +196,22 @@ function missile(args)
 	this.toHit = args.toHit;
 	this.damage = args.damage;
 	this.special = args.special;
+	this.display = function()
+	{		
+		var pants = "";
+		pants+="<b>Name:</b> D"+this.name+"<br/>";
+		pants+="<b>Cost:</b> "+this.price+"<br/>";
+		pants+="<b>To Hit:</b> "+this.toHit+"+<br/>";		
+		if(this.damage>0)
+		{
+			pants+="<b>Damage:</b> D"+this.damage+"<br/>";
+		}
+		if(this.special!=undefined)
+		{
+			pants+="<b>Special:</b> "+this.special+"<br/>";
+		}
+		return pants;
+	}
 }
 
 var ship = new ship();
@@ -576,7 +592,7 @@ function onSlotChange(id)
 	}
 	oldValues[id]=value;
 	ship.totalCost = ship.totalCost+systems[value].price*multi;
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.calculcateCost();
+	updateCostDisplay();
 	if(systems[value].modify!=null)
 	{
 		systems[value].modify(multi, id);
@@ -588,6 +604,11 @@ function onSlotChange(id)
 function populateInformationDiv(systemNumber, multi)
 {
 	document.getElementById("informationDiv").innerHTML=systems[systemNumber].display(multi);
+}
+
+function populateInformationDivMissile(missileNumber)
+{
+	document.getElementById("informationDiv").innerHTML=missiles[missileNumber].display();
 }
 
 function getSlotSize(id)
@@ -673,7 +694,7 @@ function onMissileChange(x,id)
 	oldMissileValues[x+"00"+id]=value;
 	ship.totalCost = ship.totalCost+missiles[value].price;
 	updateCostDisplay();
-	populateInformationDiv(value, 1);
+	populateInformationDivMissile(value, 1);
 	populateShipInfo();	
 }
 
