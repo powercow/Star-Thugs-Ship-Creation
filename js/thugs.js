@@ -504,15 +504,18 @@ function removeSlot(id)
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var select ="";
-	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
-	ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;
 	ship.totalCost = ship.totalCost - systems[value].price*multi;
 	if(systems[value].unmodify!=undefined)
 	{
 		systems[value].unmodify(multi, id);
 	}
-	ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
-	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
+	if(document.getElementById("slot"+id).parentElement.id!=special)
+	{
+		ship.totalCost = ship.totalCost - ship.calculateSizeValue();
+		ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;	
+		ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
+		ship.totalCost = ship.totalCost + ship.calculateSizeValue();
+	}
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
 	$("#slot"+id).remove();
 	populateSpecials();
