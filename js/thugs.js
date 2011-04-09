@@ -89,6 +89,11 @@ function ship()
 	this.crew = 0;
 	this.sensors = 0;
 	this.sizeCostMod = 0;
+	this.extraCost = 0;
+	this.calculateCost = function()
+	{
+		return this.totalCost+this.extraCost;
+	}
 	this.calculateRegen = function()
 	{
 		return this.shieldRegen;
@@ -341,7 +346,7 @@ function modifySizeCost(value)
 	ship.totalCost -= ship.calculateSizeValue();
 	ship.sizeCostMod += value;
 	ship.totalCost += ship.calculateSizeValue();
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	updateCostDisplay();
 }
 
 function ultralightMod()
@@ -441,7 +446,37 @@ function populateSpecials()
 	{		
 		removeSlot($("#special .specialSlot:last")[0].id.substr(4));
 	}
-	
+	calculateExtraSpecialSlotCost();	
+}
+
+function addSpecialSlot()
+{
+	var sselect="<div id=\"slot"+i+"\" class=\"extraSpecialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
+	for(y=0; y<systems.length;y++)
+	{
+		if(systems[y].type=="Special")
+		{
+			sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
+		}
+	}
+	sselect+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
+	$("#special").append(sselect);
+	calculateExtraSpecialSlotCost();
+	i++;
+}
+
+function calculateExtraSpecialSlotCost()
+{
+	var naturalSpecial = $("#special .specialSlot").length;
+	var extraSpecial = $("#special .extraSpecialSlot").length;
+	var extraCost = 0;
+	for(y=0; y<extraSpecial;y++)
+	{
+		extraCost += 3000+(1000*naturalSpecial);
+		naturalSpecial++;
+	}
+	ship.extraCost=extraCost;
+	updateCostDisplay();
 }
 
 function addSlot(id)
@@ -469,12 +504,12 @@ function addSlot(id)
 		select+="Heavy ";
 	}
 	select+=value+" Slot:</b></span>";
-	if(id=="core" && !canAddCore())
+	if(id=="core" && !canAddCore(multi))
 	{
 		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
 		return false;
 	}	
-	if(id=="outer" && !canAddOuter())
+	if(id=="outer" && !canAddOuter(multi))
 	{
 		alert("You cannot have more outer slots than you have slots in front, left, right, or rear");
 		return false;
@@ -494,9 +529,14 @@ function addSlot(id)
 	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
 	ship.addSlot(id, multi);
 	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	updateCostDisplay();
 	populateSpecials();
 	populateShipInfo();	
+}
+
+function updateCostDisplay()
+{
+	document.getElementById("totalcostDiv").innerHTML = "$"+ship.calculateCost();
 }
 
 function removeSlot(id)
@@ -509,14 +549,14 @@ function removeSlot(id)
 	{
 		systems[value].unmodify(multi, id);
 	}
-	if(document.getElementById("slot"+id).parentElement.id!=special)
+	if(document.getElementById("slot"+id).parentElement.id!="special")
 	{
 		ship.totalCost = ship.totalCost - ship.calculateSizeValue();
 		ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;	
 		ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 		ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	}
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	updateCostDisplay();
 	$("#slot"+id).remove();
 	populateSpecials();
 	populateShipInfo();	
@@ -536,7 +576,7 @@ function onSlotChange(id)
 	}
 	oldValues[id]=value;
 	ship.totalCost = ship.totalCost+systems[value].price*multi;
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;
+	document.getElementById("totalcostDiv").innerHTML = "$"+ship.calculcateCost();
 	if(systems[value].modify!=null)
 	{
 		systems[value].modify(multi, id);
@@ -588,23 +628,23 @@ function populateShipInfo()
 	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors;
 }
 
-function canAddCore()
+function canAddCore(multi)
 {
 	var minSlots = ship.rightSlots;
 	if(ship.leftSlots<minSlots){minSlots = ship.leftSlots;}
 	if(ship.frontSlots<minSlots){minSlots = ship.frontSlots;}
 	if(ship.rearSlots<minSlots){minSlots = ship.rearSlots;}
-	if(ship.coreSlots<minSlots){return true;}
+	if(ship.coreSlots+multi<=minSlots){return true;}
 	return false;
 }
 
-function canAddOuter()
+function canAddOuter(multi)
 {
 	var minSlots = ship.rightSlots;
 	if(ship.leftSlots<minSlots){minSlots = ship.leftSlots;}
 	if(ship.frontSlots<minSlots){minSlots = ship.frontSlots;}
 	if(ship.rearSlots<minSlots){minSlots = ship.rearSlots;}
-	if(ship.outerSlots<minSlots){return true;}
+	if(ship.outerSlots+multi<=minSlots){return true;}
 	return false;
 }
 
@@ -632,7 +672,7 @@ function onMissileChange(x,id)
 	}
 	oldMissileValues[x+"00"+id]=value;
 	ship.totalCost = ship.totalCost+missiles[value].price;
-	document.getElementById("totalcostDiv").innerHTML = "$"+ship.totalCost;	
+	updateCostDisplay();
 	populateInformationDiv(value, 1);
 	populateShipInfo();	
 }
