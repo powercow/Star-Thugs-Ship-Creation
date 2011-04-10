@@ -510,7 +510,7 @@ function addSlot(id)
 		multi = 4;
 	}		
 	var select ="<div id=\"slot"+i+"\" class=\""+value+"\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, ";	
-	select+=multi+"); openMissileDivs("+i+");\"><b>";
+	select+=multi+");\"><b>";
 	if(multi>2)
 	{
 		select+="Super ";
@@ -682,6 +682,7 @@ function createMissileRack(id, missileCount)
 		select+="</select>";
 		$("#rack"+id).append(select);
 	}
+	$('#slot'+id).append('<div style="clear:left;" id="racklink'+id+'"><a href="#" onclick="openMissileDivs('+id+');">Click here! fill it with missiles!</a></div>');
 }
 
 function onMissileChange(x,id)
@@ -710,4 +711,5 @@ function removeMissileRack(id)
 		ship.totalCost=ship.totalCost-missiles[this.options[this.selectedIndex].value].price;
 	});
 	$('#rack'+id).detach();
+	$('#racklink'+id).detach();
 }
