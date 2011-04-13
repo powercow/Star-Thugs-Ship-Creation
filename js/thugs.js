@@ -13,21 +13,11 @@ function system(args)
 	this.specialNum2 = args.specialNum2;
 	this.additionalDisplay = args.additionalDisplay;
 	this.additionalNumber = args.additionalNumber;
-	this.display = function(multi) 
+	this.display = function(size) 
 	{
 		var pants = "";
-		if(multi==1)
-		{
-			pants+="<b>Name:</b> "+this.name+"<br/>";
-		}
-		else if(multi==2)
-		{
-			pants+="<b>Name:</b> Heavy "+this.name+"<br/>";
-		}
-		else
-		{
-			pants+="<b>Name:</b> Super Heavy "+this.name+"<br/>";
-		}
+		var multi = sizeToMulti(size);
+		pants+="<b>Name:</b> "+getSizeDescription(size)+" "+this.name+"<br/>";		
 		pants+="<b>Price:</b> $"+this.price*multi+"<br/>";
 		if(this.damage>0)
 		{
@@ -35,7 +25,12 @@ function system(args)
 		}	
 		if(this.hp>0)
 		{
-			pants+="<b>HP:</b> "+this.hp*multi+"<br/>";
+			var hpMulti = multi;
+			if(size==2 || size==4)
+			{
+				hpMulti = hpMulti * 2;
+			}
+			pants+="<b>HP:</b> "+this.hp*hpMulti+"<br/>";
 		}
 		if(this.dr>0)
 		{
@@ -71,6 +66,15 @@ function system(args)
 	}
 }
 
+//Sizes: 1(normal) 2(turreted) 3(heavy) 4(turreted heavy) 5(super heavy)
+function shipSystem(args)
+{
+	this.systemId = args.systemId;
+	this.slotId = args.slotId;
+	this.size = args.size;
+	this.facing = args.facing;	
+}
+
 function ship()
 {
 	this.frontSlots = 0;
@@ -90,6 +94,7 @@ function ship()
 	this.sensors = 0;
 	this.sizeCostMod = 0;
 	this.extraCost = 0;
+	this.systems = new Array();
 	this.calculateCost = function()
 	{
 		return this.totalCost+this.extraCost;
@@ -216,7 +221,7 @@ function missile(args)
 
 var ship = new ship();
 
-var oldSizeValue = null;
+var oldSizeValues = new Array();
 var i = 0;
 
 var types = new Array();
@@ -510,7 +515,7 @@ function addSlot(id)
 		multi = 4;
 	}		
 	var select ="<div id=\"slot"+i+"\" class=\""+value+"\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, ";	
-	select+=multi+");\"><b>";
+	select+="getSystemSize("+i+"));\"><b>";
 	if(multi>2)
 	{
 		select+="Super ";
@@ -519,7 +524,7 @@ function addSlot(id)
 	{
 		select+="Heavy ";
 	}
-	select+=value+" Slot:</b></span>";
+	select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
 	if(id=="core" && !canAddCore(multi))
 	{
 		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
@@ -538,7 +543,9 @@ function addSlot(id)
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
 	}
-	select+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
+	select+="</select>";
+	select+=buildSizeSelect(multi);
+	select+="</div>";
 	$("#"+id).append(select);
 	i++;
 	ship.totalCost = ship.totalCost + typeCosts[value]*multi;		
@@ -547,7 +554,29 @@ function addSlot(id)
 	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	updateCostDisplay();
 	populateSpecials();
-	populateShipInfo();	
+	populateShipInfo();
+	oldSizeValues[i]=1;
+}
+
+//Function's pretty simple now, if crew gets added to this it may get more complex.
+function buildSizeSelect(multi)
+{
+	var sl ="";
+	if(multi<2)
+	{
+		return sl;
+	}
+	else
+	{
+		sl += "<select id=\"sizeSelect"+i+"\" onchange=\"onSlotChange("+i+");\"><option value=\"1\">Normal</option><option value=\"2\" class=\"turret\">Turreted</option><option value=\"3\">Heavy</option>";
+	}
+	if(multi>2)
+	{
+		sl += "<option value=\"4\" class=\"turret\">Heavy Turreted</option><option value=\"5\">Super Heavy</option>"
+	}
+	sl +="</select>";
+	return sl;
+	
 }
 
 function updateCostDisplay()
@@ -557,13 +586,14 @@ function updateCostDisplay()
 
 function removeSlot(id)
 {
+	var size = getSystemSize(id);
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var select ="";
-	ship.totalCost = ship.totalCost - systems[value].price*multi;
+	ship.totalCost = ship.totalCost - systems[value].price*sizeToMulti(size);
 	if(systems[value].unmodify!=undefined)
 	{
-		systems[value].unmodify(multi, id);
+		systems[value].unmodify(sizeToMulti(size), id);
 	}
 	if(document.getElementById("slot"+id).parentElement.id!="special")
 	{
@@ -581,13 +611,15 @@ function removeSlot(id)
 function onSlotChange(id)
 {
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
-	var multi = getSlotSize(id);
+	var size = getSystemSize(id)
+	var oldSize = oldSizeValues[i];
+	var multi = sizeToMulti(size);
 	if(oldValues[id]!=null)
 	{
-		ship.totalCost = ship.totalCost - systems[oldValues[id]].price*multi;
+		ship.totalCost = ship.totalCost - systems[oldValues[id]].price*sizeToMulti(oldSize);
 		if(systems[oldValues[id]].unmodify!=null)
 		{			
-			systems[oldValues[id]].unmodify(multi, id);
+			systems[oldValues[id]].unmodify(sizeToMulti(oldSize), id);
 		}
 	}
 	oldValues[id]=value;
@@ -596,14 +628,28 @@ function onSlotChange(id)
 	if(systems[value].modify!=null)
 	{
 		systems[value].modify(multi, id);
-	}	
-	populateInformationDiv(value, multi);
+	}
+	if(systems[value].type=="Weapon")
+	{
+		$("#sizeSelect"+id+" .turret").show();
+	}
+	else
+	{
+		$("#sizeSelect"+id+" .turret").hide();
+		if($("#sizeSelect"+id)[0].selectedIndex==1||$("#sizeSelect"+id)[0].selectedIndex==3)
+		{
+			$("#sizeSelect"+id)[0].selectedIndex=0;
+			$("#sizeSelect"+id)[0].value=1;
+		}
+	}
+	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
 	populateShipInfo();	
+	oldSizeValues[i]=size;
 }
 
-function populateInformationDiv(systemNumber, multi)
+function populateInformationDiv(systemNumber, size)
 {
-	document.getElementById("informationDiv").innerHTML=systems[systemNumber].display(multi);
+	document.getElementById("informationDiv").innerHTML=systems[systemNumber].display(size);
 }
 
 function populateInformationDivMissile(missileNumber)
@@ -620,6 +666,18 @@ function getSlotSize(id)
 	else if(document.getElementById("description"+id).innerHTML.indexOf("Heavy")!=-1)
 	{
 		return 2;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+function getSystemSize(id)
+{
+	if(document.getElementById("sizeSelect"+id)!=null)
+	{
+		return document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value;
 	}
 	else
 	{
@@ -712,4 +770,49 @@ function removeMissileRack(id)
 	});
 	$('#rack'+id).detach();
 	$('#racklink'+id).detach();
+}
+
+function sizeToMulti(size)
+{
+	if(size<3)
+	{
+		return 1;
+	}
+	else if(size<5)
+	{
+		return 2;
+	}
+	else
+	{
+		return 4;
+	}
+}
+
+function getSizeDescription(size)
+{
+	switch(size)
+	{
+	case "1":
+	  return "";
+	  break;
+	case "2":
+	  return "Turreted";
+	  break;
+	case "3":
+	  return "Heavy";
+	  break;
+	case "4":
+	  return "Heavy Turreted";
+	  break;
+	case "5":
+	  return "Super Heavy";
+	  break;
+	default:
+	  return "";
+	}
+}
+
+function changeSystemSize(id)
+{
+	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
 }
