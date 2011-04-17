@@ -88,13 +88,13 @@ function ship()
 	this.totalCost = 0;
 	this.shields = 0;
 	this.shieldRegen = 0;
-	this.shieldSystems = 0;
 	this.cargo = 0;
 	this.crew = 0;
 	this.sensors = 0;
 	this.sizeCostMod = 0;
 	this.extraCost = 0;
 	this.systems = new Array();
+	this.systemSizes = new Array();
 	this.calculateCost = function()
 	{
 		return this.totalCost+this.extraCost;
@@ -221,7 +221,7 @@ function missile(args)
 
 var ship = new ship();
 
-var oldSizeValues = new Array();
+//var oldSizeValues = new Array();
 var i = 0;
 
 var types = new Array();
@@ -241,7 +241,7 @@ typeCosts["Shield"]=500;
 typeCosts["Engine"]=500;
 typeCosts["specialSlot"]=0;
 
-var oldValues = new Array();
+//var oldValues = new Array();
 var oldMissileValues = new Array();
 
 var systems = new Array();
@@ -294,7 +294,6 @@ function genShieldModify(max, regen)
 	{
 		ship.shields = ship.shields + max*multi;
 		ship.shieldRegen = ship.shieldRegen + regen*multi;
-		ship.shieldSystems += 1;
 	}
 }
 function genShieldUnmodify(max, regen)
@@ -303,7 +302,6 @@ function genShieldUnmodify(max, regen)
 	{
 		ship.shields = ship.shields - max*multi;
 		ship.shieldRegen = ship.shieldRegen - regen*multi;
-		ship.shieldSystems -= 1;
 	}
 }
 systems[43]=new system({type:"Shield", price:3500, name:"Nomi Light Generator", hp:8, modify:genShieldModify(10,1), unmodify:genShieldUnmodify(10,1),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:10,specialNum2:1});
@@ -345,20 +343,17 @@ systems[77]=new system({type:"Special", name:"Racing Chip", price:5000, special:
 systems[78]=new system({type:"Special", name:"Fuel Distribution Chip", price:500, special:"+1 Thrust, Reduces Size by 1 for calculating fuel consumption", modify:function(){ship.thrust += 1;},unmodify:function(){ship.thrust -= 1;}});
 systems[79]=new system({type:"Special", name:"Shield Manifold Regulator", price:8000, special:"All shields gain DR 1 on facings with 3+ shield points when hit"});
 
-// I tried this, but it turns out that oldValues doesn't always hold a list of current systems on the ship.
-// Testing it, it worked up until I removed the slot with a shield system in it, after that, the number was skewed up by 1.
-// Instead, added shieldSystems to ship.
 function bfcCalcRegen()
 {
 	var shieldsys = 0;
-	for (key in oldValues)
+	for (key in ship.systems)
 	{
-		if (systems[oldValues[key]].type == 'Shield')
+		if (systems[ship.systems[key]].type == 'Shield')
 			shieldsys += 1;
 	}
 	return this.shieldRegen + shieldsys;
 }
-systems[80]=new system({type:"Special", name:"Bridge Flow Controller", price:15000, special:"+1 damage to all laser/plasma weapons, +1 Regen per shield generator", modify:function(){ship.calculateRegen = function(){return this.shieldRegen + this.shieldSystems;};},unmodify:function(){ship.calculateRegen = function(){return this.shieldRegen;};}});
+systems[80]=new system({type:"Special", name:"Bridge Flow Controller", price:15000, special:"+1 damage to all laser/plasma weapons, +1 Regen per shield generator", modify:function(){ship.calculateRegen = bfcCalcRegen;},unmodify:function(){ship.calculateRegen = function(){return this.shieldRegen;};}});
 systems[81]=new system({type:"Special", name:"Vulcan Magazine", price:1000, special:"Reloads vulcan/howitzer weapon once per battle"});
 systems[82]=new system({type:"Special", name:"Prysm Coil", price:2000, special:"+3 damage to linked laser weapon, destoryed if linked laser is damaged"});
 
@@ -463,10 +458,6 @@ function populateSpecials()
 			i++;		
 		}
 	}
-	else if($("#special select").length > ship.calculateSize())
-	{		
-		removeSlot($("#special .specialSlot:last")[0].id.substr(4));
-	}
 	calculateExtraSpecialSlotCost();	
 }
 
@@ -480,10 +471,16 @@ function addSpecialSlot()
 			sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
 		}
 	}
-	sselect+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
+	sselect+="</select><a href=\"#\" onClick=\"removeSpecialSlot("+i+");\">remove</a></div>";
 	$("#special").append(sselect);
 	calculateExtraSpecialSlotCost();
 	i++;
+}
+
+function removeSpecialSlot(id)
+{
+	removeSlot(id);
+	calculateExtraSpecialSlotCost();
 }
 
 function calculateExtraSpecialSlotCost()
@@ -555,7 +552,7 @@ function addSlot(id)
 	updateCostDisplay();
 	populateSpecials();
 	populateShipInfo();
-	oldSizeValues[i]=1;
+	ship.systemSizes[i]=1;
 }
 
 //Function's pretty simple now, if crew gets added to this it may get more complex.
@@ -602,6 +599,8 @@ function removeSlot(id)
 		ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 		ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	}
+	ship.systems[id] = null;
+	ship.systemSizes[id] = null;
 	updateCostDisplay();
 	$("#slot"+id).remove();
 	populateSpecials();
@@ -610,19 +609,22 @@ function removeSlot(id)
 
 function onSlotChange(id)
 {
+	//replaced all iterations of oldValues here with ship.systems
+	//and all iterations of oldSizeValues here with ship.systemSizes
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
-	var size = getSystemSize(id)
-	var oldSize = oldSizeValues[i];
+	var size = getSystemSize(id);
+	var oldSize = ship.systemSizes[i];
 	var multi = sizeToMulti(size);
-	if(oldValues[id]!=null)
+	if(ship.systems[id]!=null)
 	{
-		ship.totalCost = ship.totalCost - systems[oldValues[id]].price*sizeToMulti(oldSize);
-		if(systems[oldValues[id]].unmodify!=null)
+		ship.totalCost = ship.totalCost - systems[ship.systems[id]].price*sizeToMulti(oldSize);
+		if(systems[ship.systems[id]].unmodify!=null)
 		{			
-			systems[oldValues[id]].unmodify(sizeToMulti(oldSize), id);
+			systems[ship.systems[id]].unmodify(sizeToMulti(oldSize), id);
 		}
 	}
-	oldValues[id]=value;
+	ship.systems[id]=value;
+	ship.systemSizes[id]=size;
 	ship.totalCost = ship.totalCost+systems[value].price*multi;
 	updateCostDisplay();
 	if(systems[value].modify!=null)
@@ -636,15 +638,15 @@ function onSlotChange(id)
 	else
 	{
 		$("#sizeSelect"+id+" .turret").hide();
-		if($("#sizeSelect"+id)[0].selectedIndex==1||$("#sizeSelect"+id)[0].selectedIndex==3)
-		{
-			$("#sizeSelect"+id)[0].selectedIndex=0;
-			$("#sizeSelect"+id)[0].value=1;
-		}
+		if($("#sizeSelect"+id)[0] != null)
+			if ($("#sizeSelect"+id)[0].selectedIndex==1||$("#sizeSelect"+id)[0].selectedIndex==3)
+			{
+				$("#sizeSelect"+id)[0].selectedIndex=0;
+				$("#sizeSelect"+id)[0].value=1;
+			}
 	}
-	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
-	populateShipInfo();	
-	oldSizeValues[i]=size;
+	populateInformationDiv(value, size);
+	populateShipInfo();
 }
 
 function populateInformationDiv(systemNumber, size)
