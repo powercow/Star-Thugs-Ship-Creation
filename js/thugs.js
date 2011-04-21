@@ -425,13 +425,13 @@ function populateSpecials()
 	{
 		if(specials.length > ship.calculateSize())
 		{
-			var j = 0;
-			for(j; j < ship.systems.length; j++)
+			var lastSpec;
+			for(j=0; j < ship.systems.length; j++)
 				if(ship.systems[j].facing == "special")
 				{
-					removeSlot(ship.systems[j].slotId);
-					break;
+					lastSpec = j;
 				}
+			removeSlot(ship.systems[lastSpec].slotId);
 		}
 	}
 	updateCostDisplay();
@@ -449,7 +449,7 @@ function addSpecialSlot()
 	}
 	sselect+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
 	$("#special").append(sselect);
-	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1, slotSize:0, slotType:"Special"}));
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'extraSpecial', size:1, slotSize:0, slotType:"Special"}));
 	updateCostDisplay();
 	i++;
 }
