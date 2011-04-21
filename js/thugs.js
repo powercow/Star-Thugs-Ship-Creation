@@ -94,7 +94,6 @@ function ship()
 	this.sizeCostMod = 0;
 	this.extraCost = 0;
 	this.systems = new Array();
-	this.systemSizes = new Array();
 	this.calculateCost = function()
 	{
 		return this.totalCost+this.extraCost;
@@ -135,7 +134,8 @@ function ship()
 	this.calculateSizeValue = calculateSizeValue;
 	this.addSlot = function(type, multi)
 	{
-		this.totalSlots=this.totalSlots+multi;
+		if(type != 'special')
+			this.totalSlots=this.totalSlots+multi;
 		if(type=='front')
 		{
 			this.frontSlots=this.frontSlots+multi;
@@ -313,6 +313,7 @@ systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp
 systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:80,specialNum2:14});
 systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:20});
 systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:120,specialNum2:20});
+systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[52]=new system({type:"Cargo", name:"Cargo Bay", price:400, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
 systems[53]=new system({type:"Cargo", name:"Autoloading Bay", price:8000, hp:8, modify:function(multi){ship.cargo = ship.cargo + 4*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 4*multi;}});
 systems[54]=new system({type:"Cargo", name:"Armored Cargo Bay", price:10000, hp:16, dr:2, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
@@ -321,7 +322,7 @@ systems[56]=new system({type:"Cargo", name:"Refrigeration Bay", price:1200, hp:8
 systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, modify:function(multi){ship.crew = ship.crew + 2*multi;}, unmodify:function(multi){ship.crew = ship.crew - 2*multi;}});
 systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
 systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
-systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[67]=new system({type:"Special", name:"Ground Scanner", price:500, special:"Intensity +3 for scanning planet surface"});
 systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
@@ -329,7 +330,6 @@ systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:
 systems[64]=new system({type:"Special", name:"High-Grade Sensor Array", price:500, special:"Intensity 2", modify:function(){ship.sensors += 2;}, unmodify:function(){ship.sensors -= 2;}});
 systems[65]=new system({type:"Special", name:"Advanced Sensor Array", price:15000, special:"Intensity 4<br/>un-Bend one scanner or targeter per turn", modify:function(){ship.sensors += 4;},unmodify:function(){ship.sensors -= 4;}});
 systems[66]=new system({type:"Special", name:"Hyper Sensor Array", price:150000, special:"Intensity 8<br/>un-Bend 2 scanners or targeters per turn", modify:function(){ship.sensors += 8;},unmodify:function(){ship.sensors -= 8;}});
-systems[67]=new system({type:"Special", name:"Ground Scanner", price:500, special:"Intensity +3 for scanning planet surface"});
 systems[68]=new system({type:"Special", name:"Combat Scanner", price:500, special:"BEND to add Intensity to missile or direct-fire to-hit roll"});
 systems[69]=new system({type:"Special", name:"Auxiliary Radar", price:5000, special:"Intensity +1", modify:function(){ship.sensors += 1;},unmodify:function(){ship.sensors -= 1;}});
 systems[70]=new system({type:"Special", name:"Structural Scanner", price:8000, special:"BEND when hitting a ship to skip first layer of armor.<br/>req. Intensity 2+"});
@@ -348,7 +348,7 @@ function bfcCalcRegen()
 	var shieldsys = 0;
 	for (key in ship.systems)
 	{
-		if (systems[ship.systems[key]].type == 'Shield')
+		if (systems[ship.systems[key].systemId].type == 'Shield')
 			shieldsys += 1;
 	}
 	return this.shieldRegen + shieldsys;
@@ -441,9 +441,10 @@ function populateSlotDropdown(id)
 function populateSpecials()
 {
 	var sselect = "";
-	if($("#special .specialSlot").length < ship.calculateSize())
+	var specials = $("#special .specialSlot");
+	if(specials.length < ship.calculateSize())
 	{
-		for(x=$("#special .specialSlot").length; x<ship.calculateSize(); x++)
+		for(x=specials.length; x<ship.calculateSize(); x++)
 		{
 			sselect+="<div id=\"slot"+i+"\" class=\"specialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 			for(y=0; y<systems.length;y++)
@@ -455,7 +456,21 @@ function populateSpecials()
 			}
 			sselect+="</select></div>";
 			$("#special").append(sselect);
-			i++;		
+			ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1}));
+			i++;
+		}
+	}
+	else
+	{
+		if(specials.length > ship.calculateSize())
+		{
+			var j = 0;
+			for(j; j < ship.systems.length; j++)
+				if(ship.systems[j].facing == "special")
+				{
+					removeSlot(ship.systems[j].slotId);
+					break;
+				}
 		}
 	}
 	calculateExtraSpecialSlotCost();	
@@ -474,6 +489,7 @@ function addSpecialSlot()
 	sselect+="</select><a href=\"#\" onClick=\"removeSpecialSlot("+i+");\">remove</a></div>";
 	$("#special").append(sselect);
 	calculateExtraSpecialSlotCost();
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1}));
 	i++;
 }
 
@@ -521,7 +537,8 @@ function addSlot(id)
 	{
 		select+="Heavy ";
 	}
-	select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
+	if(id != "special")
+		select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
 	if(id=="core" && !canAddCore(multi))
 	{
 		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
@@ -535,7 +552,7 @@ function addSlot(id)
 	select += "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 	for(x=0; x<systems.length; x++)
 	{
-		if(systems[x].type==value || (value=="Universal" && x!=41))
+		if(systems[x].type==value || (value=="Universal" && x!=41 && systems[x].type != "Special"))
 		{
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
@@ -544,6 +561,7 @@ function addSlot(id)
 	select+=buildSizeSelect(multi);
 	select+="</div>";
 	$("#"+id).append(select);
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:id, size:1}));
 	i++;
 	ship.totalCost = ship.totalCost + typeCosts[value]*multi;		
 	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
@@ -552,7 +570,6 @@ function addSlot(id)
 	updateCostDisplay();
 	populateSpecials();
 	populateShipInfo();
-	ship.systemSizes[i]=1;
 }
 
 //Function's pretty simple now, if crew gets added to this it may get more complex.
@@ -581,12 +598,19 @@ function updateCostDisplay()
 	document.getElementById("totalcostDiv").innerHTML = "$"+ship.calculateCost();
 }
 
+function getSystemKeyById(id)
+{
+	for (key in ship.systems)
+		if (ship.systems[key].slotId == id)
+			return key;
+}
+
 function removeSlot(id)
 {
 	var size = getSystemSize(id);
 	var multi = getSlotSize(id);
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
-	var select ="";
+	var select = "";
 	ship.totalCost = ship.totalCost - systems[value].price*sizeToMulti(size);
 	if(systems[value].unmodify!=undefined)
 	{
@@ -599,8 +623,7 @@ function removeSlot(id)
 		ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
 		ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	}
-	ship.systems[id] = null;
-	ship.systemSizes[id] = null;
+	ship.systems.splice(getSystemKeyById(id),1);
 	updateCostDisplay();
 	$("#slot"+id).remove();
 	populateSpecials();
@@ -609,22 +632,18 @@ function removeSlot(id)
 
 function onSlotChange(id)
 {
-	//replaced all iterations of oldValues here with ship.systems
-	//and all iterations of oldSizeValues here with ship.systemSizes
+	var oldSystem = ship.systems[getSystemKeyById(id)];
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
+	var facing = document.getElementById("slot"+id).parentNode.id;
 	var size = getSystemSize(id);
-	var oldSize = ship.systemSizes[i];
 	var multi = sizeToMulti(size);
-	if(ship.systems[id]!=null)
+	ship.totalCost = ship.totalCost - systems[oldSystem.systemId].price*sizeToMulti(oldSystem.size);
+	if(systems[oldSystem.systemId].unmodify!=null)
 	{
-		ship.totalCost = ship.totalCost - systems[ship.systems[id]].price*sizeToMulti(oldSize);
-		if(systems[ship.systems[id]].unmodify!=null)
-		{			
-			systems[ship.systems[id]].unmodify(sizeToMulti(oldSize), id);
-		}
+		systems[oldSystem.systemId].unmodify(sizeToMulti(oldSystem.size), id);
 	}
-	ship.systems[id]=value;
-	ship.systemSizes[id]=size;
+	var newSys = new shipSystem({systemId:parseInt(value), size:size, facing:facing, slotId:parseInt(id)})
+	ship.systems[key] = newSys;
 	ship.totalCost = ship.totalCost+systems[value].price*multi;
 	updateCostDisplay();
 	if(systems[value].modify!=null)
