@@ -1,3 +1,15 @@
+// Sean's Change Notes:
+//
+// replaced oldValues and oldSizes with ship.systems
+// replaced ship.*Slots with calcFacingSlots function.
+// replaced ship.totalSlots with calcTotalSlots function.
+// removed ship.(add/remove)Slot functions.
+// replaced canAdd(core/outer) functions with a more generic canAdd function.
+// added shipMissile class and ship.missiles
+// refactored ship.calculateCost to calculate the cost based on the current systems
+//    and missiles and removed ship.totalCost and ship.extraCost.
+// added a tad of missile info to the shipinfo display.
+
 function system(args) 
 {
 	this.name = args.name;
@@ -72,31 +84,45 @@ function shipSystem(args)
 	this.systemId = args.systemId;
 	this.slotId = args.slotId;
 	this.size = args.size;
-	this.facing = args.facing;	
+	this.facing = args.facing;
+	this.slotSize = args.slotSize;
+	this.slotType = args.slotType;
+}
+
+function shipMissile(args)
+{
+	this.missileId = args.missileId;
+	this.slotId = args.slotId;
 }
 
 function ship()
 {
-	this.frontSlots = 0;
-	this.outerSlots = 0;
-	this.leftSlots = 0;
-	this.rightSlots = 0;
-	this.coreSlots = 0;
-	this.rearSlots = 0;
-	this.totalSlots = 0;
 	this.thrust = 0;
-	this.totalCost = 0;
 	this.shields = 0;
 	this.shieldRegen = 0;
 	this.cargo = 0;
 	this.crew = 0;
 	this.sensors = 0;
 	this.sizeCostMod = 0;
-	this.extraCost = 0;
 	this.systems = new Array();
+	this.missiles = new Array();
 	this.calculateCost = function()
 	{
-		return this.totalCost+this.extraCost;
+		var cost = 0;
+		//size cost
+		cost += this.calculateSizeValue();
+		//extra special system costs
+		cost += calculateExtraSpecialSlotCost();
+		//slot costs and system costs
+		for(j=0;j<this.systems.length;j++)
+		{
+			cost += typeCosts[this.systems[j].slotType]*this.systems[j].slotSize;
+			cost += systems[this.systems[j].systemId].price*sizeToMulti(this.systems[j].size);
+		}
+		//missile costs
+		for(j=0;j<this.missiles.length;j++)
+			cost += missiles[this.missiles[j].missileId].price;
+		return cost;
 	}
 	this.calculateRegen = function()
 	{
@@ -116,10 +142,10 @@ function ship()
 	}
 	this.calculateSize = function()
 	{
-		var size = Math.ceil(this.totalSlots/5);
+		var size = Math.ceil(calcTotalSlots()/5);
 		if(size>8)
 		{
-			size = Math.ceil(Math.ceil(((this.totalSlots - 40)/10))+8);
+			size = Math.ceil(Math.ceil(((calcTotalSlots() - 40)/10))+8);
 		}
 		return size;
 	}
@@ -132,66 +158,6 @@ function ship()
 		return (this.calculateSize());
 	}
 	this.calculateSizeValue = calculateSizeValue;
-	this.addSlot = function(type, multi)
-	{
-		if(type != 'special')
-			this.totalSlots=this.totalSlots+multi;
-		if(type=='front')
-		{
-			this.frontSlots=this.frontSlots+multi;
-		}
-		else if(type=='outer')
-		{
-			this.outerSlots=this.outerSlots+multi;
-		}
-		else if(type=='left')
-		{
-			this.leftSlots=this.leftSlots+multi;;
-		}
-		else if(type=='right')
-		{
-			this.rightSlots=this.rightSlots+multi;
-		}
-		else if(type=='core')
-		{
-			this.coreSlots=this.coreSlots+multi;
-		}
-		else if(type=='rear')
-		{
-			this.rearSlots=this.rearSlots+multi;
-		}
-	}
-	this.removeSlot = function(type, multi)
-	{
-		if(type!="special")
-		{
-			this.totalSlots=this.totalSlots-multi;
-		}
-		if(type=='front')
-		{
-			this.frontSlots=this.frontSlots-multi;
-		}
-		else if(type=='outer')
-		{
-			this.outerSlots=this.outerSlots-multi;
-		}
-		else if(type=='left')
-		{
-			this.leftSlots=this.leftSlots-multi;;
-		}
-		else if(type=='right')
-		{
-			this.rightSlots=this.rightSlots-multi;
-		}
-		else if(type=='core')
-		{
-			this.coreSlots=this.coreSlots-multi;
-		}
-		else if(type=='rear')
-		{
-			this.rearSlots=this.rearSlots-multi;
-		}
-	}
 }
 
 function missile(args)
@@ -239,10 +205,7 @@ typeCosts["Cargo"]=0;
 typeCosts["Weapon"]=500;
 typeCosts["Shield"]=500;
 typeCosts["Engine"]=500;
-typeCosts["specialSlot"]=0;
-
-//var oldValues = new Array();
-var oldMissileValues = new Array();
+typeCosts["Special"]=0;
 
 var systems = new Array();
 systems[0]=new system({type:"Weapon", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
@@ -346,9 +309,9 @@ systems[79]=new system({type:"Special", name:"Shield Manifold Regulator", price:
 function bfcCalcRegen()
 {
 	var shieldsys = 0;
-	for (key in ship.systems)
+	for (j=0; j<ship.systems.length; j++)
 	{
-		if (systems[ship.systems[key].systemId].type == 'Shield')
+		if (systems[ship.systems[j].systemId].type == 'Shield')
 			shieldsys += 1;
 	}
 	return this.shieldRegen + shieldsys;
@@ -359,9 +322,7 @@ systems[82]=new system({type:"Special", name:"Prysm Coil", price:2000, special:"
 
 function modifySizeCost(value)
 {
-	ship.totalCost -= ship.calculateSizeValue();
 	ship.sizeCostMod += value;
-	ship.totalCost += ship.calculateSizeValue();
 	updateCostDisplay();
 }
 
@@ -414,7 +375,7 @@ missiles[4]=new missile({name:"Lance",price:650,toHit:5,damage:16});
 missiles[5]=new missile({name:"Typhoon",price:1200,toHit:3,damage:18});
 missiles[6]=new missile({name:"Rapier",price:5000,toHit:1,damage:16,special:"bypasses first armor system it hits, ignores up to 15 points of shields"});
 missiles[7]=new missile({name:"Medusa Shield Disruptor",price:1000,toHit:5,damage:0,special:"Inflicts 20 damage to shields on facing and 10 damage to shields on adjacent facings"});
-missiles[8]=new missile({name:"Hammrhead",price:2000,toHit:8,damage:40});
+missiles[8]=new missile({name:"Hammerhead",price:2000,toHit:8,damage:40});
 missiles[9]=new missile({name:"Mace",price:350,toHit:5,damage:8,special:"bypasses first armor system"});
 missiles[10]=new missile({name:"Achilles",price:500,toHit:7,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
 missiles[11]=new missile({name:"Police Achilles",price:2000,toHit:4,damage:8,special:"bypasses non-engine systems, will always hit a facing with an engine"});
@@ -456,7 +417,7 @@ function populateSpecials()
 			}
 			sselect+="</select></div>";
 			$("#special").append(sselect);
-			ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1}));
+			ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1, slotSize:0, slotType:"Special"}));
 			i++;
 		}
 	}
@@ -473,7 +434,7 @@ function populateSpecials()
 				}
 		}
 	}
-	calculateExtraSpecialSlotCost();	
+	updateCostDisplay();
 }
 
 function addSpecialSlot()
@@ -486,17 +447,11 @@ function addSpecialSlot()
 			sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
 		}
 	}
-	sselect+="</select><a href=\"#\" onClick=\"removeSpecialSlot("+i+");\">remove</a></div>";
+	sselect+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
 	$("#special").append(sselect);
-	calculateExtraSpecialSlotCost();
-	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1}));
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1, slotSize:0, slotType:"Special"}));
+	updateCostDisplay();
 	i++;
-}
-
-function removeSpecialSlot(id)
-{
-	removeSlot(id);
-	calculateExtraSpecialSlotCost();
 }
 
 function calculateExtraSpecialSlotCost()
@@ -509,8 +464,7 @@ function calculateExtraSpecialSlotCost()
 		extraCost += 3000+(1000*naturalSpecial);
 		naturalSpecial++;
 	}
-	ship.extraCost=extraCost;
-	updateCostDisplay();
+	return extraCost;
 }
 
 function addSlot(id)
@@ -537,14 +491,13 @@ function addSlot(id)
 	{
 		select+="Heavy ";
 	}
-	if(id != "special")
-		select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
-	if(id=="core" && !canAddCore(multi))
+	select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
+	if(id=="core" && !canAdd('core',multi))
 	{
 		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
 		return false;
 	}	
-	if(id=="outer" && !canAddOuter(multi))
+	if(id=="outer" && !canAdd('outer',multi))
 	{
 		alert("You cannot have more outer slots than you have slots in front, left, right, or rear");
 		return false;
@@ -561,12 +514,8 @@ function addSlot(id)
 	select+=buildSizeSelect(multi);
 	select+="</div>";
 	$("#"+id).append(select);
-	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:id, size:1}));
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:id, size:1, slotSize:multi, slotType:value}));
 	i++;
-	ship.totalCost = ship.totalCost + typeCosts[value]*multi;		
-	ship.totalCost = ship.totalCost - ship.calculateSizeValue();
-	ship.addSlot(id, multi);
-	ship.totalCost = ship.totalCost + ship.calculateSizeValue();
 	updateCostDisplay();
 	populateSpecials();
 	populateShipInfo();
@@ -600,30 +549,20 @@ function updateCostDisplay()
 
 function getSystemKeyById(id)
 {
-	for (key in ship.systems)
-		if (ship.systems[key].slotId == id)
-			return key;
+	for (j=0; j< ship.systems.length; j++)
+		if (ship.systems[j].slotId == id)
+			return j;
 }
 
 function removeSlot(id)
 {
-	var size = getSystemSize(id);
-	var multi = getSlotSize(id);
-	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
-	var select = "";
-	ship.totalCost = ship.totalCost - systems[value].price*sizeToMulti(size);
-	if(systems[value].unmodify!=undefined)
+	var syskey = getSystemKeyById(id);
+	var oldSys = ship.systems[syskey];
+	if(systems[oldSys.systemId].unmodify!=undefined)
 	{
-		systems[value].unmodify(sizeToMulti(size), id);
+		systems[oldSys.systemId].unmodify(sizeToMulti(size), id);
 	}
-	if(document.getElementById("slot"+id).parentElement.id!="special")
-	{
-		ship.totalCost = ship.totalCost - ship.calculateSizeValue();
-		ship.totalCost = ship.totalCost - typeCosts[$("#slot"+id)[0].className]*multi;	
-		ship.removeSlot(document.getElementById("slot"+id).parentElement.id, multi);
-		ship.totalCost = ship.totalCost + ship.calculateSizeValue();
-	}
-	ship.systems.splice(getSystemKeyById(id),1);
+	ship.systems.splice(syskey,1);
 	updateCostDisplay();
 	$("#slot"+id).remove();
 	populateSpecials();
@@ -632,20 +571,18 @@ function removeSlot(id)
 
 function onSlotChange(id)
 {
-	var oldSystem = ship.systems[getSystemKeyById(id)];
+	var syskey = getSystemKeyById(id)
+	var oldSystem = ship.systems[syskey];
 	var value = document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value;
 	var facing = document.getElementById("slot"+id).parentNode.id;
 	var size = getSystemSize(id);
 	var multi = sizeToMulti(size);
-	ship.totalCost = ship.totalCost - systems[oldSystem.systemId].price*sizeToMulti(oldSystem.size);
 	if(systems[oldSystem.systemId].unmodify!=null)
 	{
 		systems[oldSystem.systemId].unmodify(sizeToMulti(oldSystem.size), id);
 	}
-	var newSys = new shipSystem({systemId:parseInt(value), size:size, facing:facing, slotId:parseInt(id)})
-	ship.systems[key] = newSys;
-	ship.totalCost = ship.totalCost+systems[value].price*multi;
-	updateCostDisplay();
+	ship.systems[syskey].systemId = parseInt(value);
+	ship.systems[syskey].size = size;
 	if(systems[value].modify!=null)
 	{
 		systems[value].modify(multi, id);
@@ -664,6 +601,7 @@ function onSlotChange(id)
 				$("#sizeSelect"+id)[0].value=1;
 			}
 	}
+	updateCostDisplay();
 	populateInformationDiv(value, size);
 	populateShipInfo();
 }
@@ -676,22 +614,6 @@ function populateInformationDiv(systemNumber, size)
 function populateInformationDivMissile(missileNumber)
 {
 	document.getElementById("informationDiv").innerHTML=missiles[missileNumber].display();
-}
-
-function getSlotSize(id)
-{
-	if(document.getElementById("description"+id).innerHTML.indexOf("Super")!=-1)
-	{
-		return 4;
-	}
-	else if(document.getElementById("description"+id).innerHTML.indexOf("Heavy")!=-1)
-	{
-		return 2;
-	}
-	else
-	{
-		return 1;
-	}
 }
 
 function getSystemSize(id)
@@ -723,29 +645,51 @@ function calculateSizeValue()
 	}
 }
 
+function missileDisplay()
+{
+	var misnum = 0;
+	for(j=0;j<ship.missiles.length;j++)
+		if(ship.missiles[j].missileId != 0)
+			misnum++;
+	return misnum + '/' + ship.missiles.length;
+}
+
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+ship.totalSlots+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors;
+	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+calcTotalSlots()+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors + "<br/>Missiles: " + missileDisplay();
 }
 
-function canAddCore(multi)
+function calcTotalSlots()
 {
-	var minSlots = ship.rightSlots;
-	if(ship.leftSlots<minSlots){minSlots = ship.leftSlots;}
-	if(ship.frontSlots<minSlots){minSlots = ship.frontSlots;}
-	if(ship.rearSlots<minSlots){minSlots = ship.rearSlots;}
-	if(ship.coreSlots+multi<=minSlots){return true;}
-	return false;
+	var num = 0;
+	for(j=0; j<ship.systems.length; j++)
+		num += ship.systems[j].slotSize;
+	return num;
 }
 
-function canAddOuter(multi)
+function calcFacingSlots(fid)
 {
-	var minSlots = ship.rightSlots;
-	if(ship.leftSlots<minSlots){minSlots = ship.leftSlots;}
-	if(ship.frontSlots<minSlots){minSlots = ship.frontSlots;}
-	if(ship.rearSlots<minSlots){minSlots = ship.rearSlots;}
-	if(ship.outerSlots+multi<=minSlots){return true;}
-	return false;
+	var num = 0;
+	for(j=0; j<ship.systems.length; j++)
+		if(ship.systems[j].facing == fid)
+			num += ship.systems[j].slotSize;
+	return num;
+}
+
+function canAdd(fid, multi)
+{
+	var minSlots = calcFacingSlots('right');
+	if(calcFacingSlots('left')<minSlots){minSlots = calcFacingSlots('left');}
+	if(calcFacingSlots('front')<minSlots){minSlots = calcFacingSlots('front');}
+	if(calcFacingSlots('rear')<minSlots){minSlots = calcFacingSlots('rear');}
+	return (calcFacingSlots(fid)+multi <= minSlots);
+}
+
+function getMissileKeyById(id)
+{
+	for(j=0;j<ship.missiles.length;j++)
+		if(ship.missiles[j].slotId == id)
+			return j;
 }
 
 function createMissileRack(id, missileCount)
@@ -760,6 +704,7 @@ function createMissileRack(id, missileCount)
 		}
 		select+="</select>";
 		$("#rack"+id).append(select);
+		ship.missiles.push(new shipMissile({slotId:x+"missileSelect"+id, missileId:0}));
 	}
 	$('#slot'+id).append('<div style="clear:left;" id="racklink'+id+'"><a href="#" onclick="openMissileDivs('+id+');">Click here! fill it with missiles!</a></div>');
 }
@@ -767,15 +712,12 @@ function createMissileRack(id, missileCount)
 function onMissileChange(x,id)
 {
 	var value = document.getElementById(x+"missileSelect"+id).options[document.getElementById(x+"missileSelect"+id).selectedIndex].value;
-	if(oldMissileValues[x+"00"+id]!=null)
-	{
-		ship.totalCost = ship.totalCost - missiles[oldMissileValues[x+"00"+id]].price;
-	}
-	oldMissileValues[x+"00"+id]=value;
-	ship.totalCost = ship.totalCost+missiles[value].price;
+	var miskey = getMissileKeyById(x+"missileSelect"+id);
+	var oldMissile = ship.missiles[miskey];
+	ship.missiles[miskey].missileId=value;
 	updateCostDisplay();
 	populateInformationDivMissile(value, 1);
-	populateShipInfo();	
+	populateShipInfo();
 }
 
 function openMissileDivs(id)
@@ -787,7 +729,7 @@ function removeMissileRack(id)
 {
 	$('#rack'+id+' select').each(function() 
 	{
-		ship.totalCost=ship.totalCost-missiles[this.options[this.selectedIndex].value].price;
+		ship.missiles.splice(getMissileKeyById(this.id),1);
 	});
 	$('#rack'+id).detach();
 	$('#racklink'+id).detach();
