@@ -560,7 +560,7 @@ function removeSlot(id)
 	var oldSys = ship.systems[syskey];
 	if(systems[oldSys.systemId].unmodify!=undefined)
 	{
-		systems[oldSys.systemId].unmodify(sizeToMulti(size), id);
+		systems[oldSys.systemId].unmodify(sizeToMulti(oldSys.size), id);
 	}
 	ship.systems.splice(syskey,1);
 	updateCostDisplay();
