@@ -170,9 +170,13 @@ function missile(args)
 	this.display = function()
 	{		
 		var pants = "";
-		pants+="<b>Name:</b> D"+this.name+"<br/>";
+		pants+="<b>Name:</b> "+this.name+"<br/>";
 		pants+="<b>Cost:</b> "+this.price+"<br/>";
-		pants+="<b>To Hit:</b> "+this.toHit+"+<br/>";		
+		pants+="<b>To Hit:</b> ";
+		if(this.toHit >= 0)
+			pants+=this.toHit+"+<br/>";
+		else
+			pants += '*<br/>';
 		if(this.damage>0)
 		{
 			pants+="<b>Damage:</b> D"+this.damage+"<br/>";
@@ -348,10 +352,7 @@ function tankMod()
 {
 	ship.calculateSpeed = function()
 	{
-		var num = 0;
-		if(this.calculateSize() > 1)
-			num = 1;
-		return Math.ceil(this.calculateThrust()/(this.calculateSize()+num));
+		return Math.ceil(this.calculateThrust()/(this.calculateSize()+1));
 	};
 	modifySizeCost(3000);
 }
@@ -360,11 +361,11 @@ function tankUnmod()
 	ship.calculateSpeed = function(){return Math.ceil(this.calculateThrust()/this.calculateSize());};
 	modifySizeCost(-3000);
 }
-systems[83]=new system({type:"Special", name:"Tank Frame", price:6000, special:"Costs $3000 extra per size value<br/>Increaseses size by 1 for purposes of determining speed<br/>All systems gain +2 Damage Reduction", modify:tankMod, unmodify:tankUnmod});
-systems[84]=new system({type:"Special", name:"|\|Uk3z0r Chip", price:25000, special:"BEND when hacking a ship to hack all computer systems simultaneously"});
-systems[85]=new system({type:"Special", name:"Point Defense Array", price:2000, special:"Costs 1,000 extra per size value<br/>destroys missiles on a roll of 10+", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
-systems[86]=new system({type:"Special", name:"Sensor Scrambler", price:2000, special:"Costs 1,000 extra per size value<br/>-2 enemy sensor intensity", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
-systems[87]=new system({type:"Special", name:"Stealth Coat", price:5000, special:"Costs 2000 extra per size value<br/>-2 enemy sensor intensity<br/>if enemy intensity < 1 then -2 to hit at medium, -4 at long and for missiles", modify:function(){modifySizeCost(2000);}, unmodify:function(){modifySizeCost(-2000);}});
+systems[84]=new system({type:"Special", name:"Tank Frame", price:6000, special:"Costs $3000 extra per size value<br/>Increaseses size by 1 for purposes of determining speed<br/>All systems gain +2 Damage Reduction", modify:tankMod, unmodify:tankUnmod});
+systems[85]=new system({type:"Special", name:"|\|Uk3z0r Chip", price:25000, special:"BEND when hacking a ship to hack all computer systems simultaneously"});
+systems[86]=new system({type:"Special", name:"Point Defense Array", price:2000, special:"Costs 1,000 extra per size value<br/>destroys missiles on a roll of 10+", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
+systems[87]=new system({type:"Special", name:"Sensor Scrambler", price:2000, special:"Costs 1,000 extra per size value<br/>-2 enemy sensor intensity", modify:function(){modifySizeCost(1000);}, unmodify:function(){modifySizeCost(-1000);}});
+systems[88]=new system({type:"Special", name:"Stealth Coat", price:5000, special:"Costs 2000 extra per size value<br/>-2 enemy sensor intensity<br/>if enemy intensity < 1 then -2 to hit at medium, -4 at long and for missiles", modify:function(){modifySizeCost(2000);}, unmodify:function(){modifySizeCost(-2000);}});
 
 var missiles = new Array();
 missiles[0]=new missile({name:"Empty",price:0,toHit:0,damage:0});
