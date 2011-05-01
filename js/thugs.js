@@ -106,6 +106,7 @@ function ship()
 	this.sizeCostMod = 0;
 	this.systems = new Array();
 	this.missiles = new Array();
+	this.crewToSize = 0;
 	this.calculateCost = function()
 	{
 		var cost = 0;
@@ -142,20 +143,21 @@ function ship()
 	}
 	this.calculateSize = function()
 	{
-		var size = Math.ceil(calcTotalSlots()/5);
+		var size = Math.ceil((calcTotalSlots()-this.crewToSize)/5);
 		if(size>8)
 		{
-			size = Math.ceil(Math.ceil(((calcTotalSlots() - 40)/10))+8);
+			size = Math.ceil(Math.ceil((((calcTotalSlots()-this.crewToSize) - 40)/10))+8);
 		}
 		return size;
 	}
 	this.calculateBaseCrew = function()
 	{
-		return (this.calculateSize() + 2);
-	}
-	this.calculateBaseCargo = function()
-	{
-		return (this.calculateSize());
+		crew = this.calculateSize() + 2 - 2*this.crewToSize;
+		if(crew < 3)
+			$("#remCrew").hide();
+		else
+			$("#remCrew").show();
+		return crew;
 	}
 	this.calculateSizeValue = calculateSizeValue;
 }
@@ -655,9 +657,17 @@ function missileDisplay()
 	return misnum + '/' + ship.missiles.length;
 }
 
+function crewSizeDisp()
+{
+	if(ship.crewToSize == 0)
+		return "";
+	else
+		return ": " + ship.crewToSize + " free)";
+}
+
 function populateShipInfo()
 {
-	$('#shipInfo')[0].innerHTML="<b>Ship Stats:</b><br/>Size: "+ship.calculateSize()+" ("+calcTotalSlots()+" slots)<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateBaseCargo()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors + "<br/>Missiles: " + missileDisplay();
+	$('#shipInfo')[0].innerHTML="Size: "+ship.calculateSize()+" ("+calcTotalSlots()+" slots"+crewSizeDisp()+")<br/>Speed: "+ship.calculateSpeed()+" ("+ship.calculateThrust()+" thrust)<br/>Defense: "+ship.calculateDefense() + "<br/>Max Shields: " + ship.shields + " Regen: " + ship.calculateRegen() + "<br/>Cargo Capacity: " + (ship.cargo + ship.calculateSize()) + "<br/>Crew Max: " + (ship.crew + ship.calculateBaseCrew()) + "<br/>Sensor Intensity: " + ship.sensors + "<br/>Missiles: " + missileDisplay();
 }
 
 function calcTotalSlots()
@@ -779,4 +789,18 @@ function getSizeDescription(size)
 function changeSystemSize(id)
 {
 	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
+}
+
+function remCrew()
+{
+	ship.crewToSize += 1;
+	$("#addCrew").show();
+	populateShipInfo();
+}
+function addCrew()
+{
+	ship.crewToSize -= 1;
+	if(ship.crewToSize < 1)
+		document.getElementById('addCrew').style.display = 'none';
+	populateShipInfo();
 }

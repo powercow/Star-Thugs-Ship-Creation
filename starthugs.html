@@ -89,7 +89,12 @@
 		</script>		
 	</head>
 	<body>	
-		<div class="total">Total Cost:<div id="totalcostDiv">$0</div></div><div class="shipInfo" id="shipInfo">Ship Stats:</div>
+		<div class="total">Total Cost:<div id="totalcostDiv">$0</div></div>
+		<div class="shipInfo"><b>Ship Stats:</b><br/>
+			<div id="shipInfo"></div>
+		</div>
+		<a id="remCrew" href="#" onClick="remCrew();" style="display:none">Remove 2 crew to gain 1 size-free slot</a><br/>
+		<a id="addCrew" href="#" onClick="addCrew();" style="display:none">Add 2 crew to lose 1 size-free slot</a><br/>
 		<div class="starship outer">
 			<h2>Outer Systems</h2>
 			<div id="outer"></div>
