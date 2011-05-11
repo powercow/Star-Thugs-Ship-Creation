@@ -19,6 +19,7 @@ function system(args)
 	this.dr = args.dr;
 	this.special = args.special;
 	this.type = args.type;
+	this.weapType = args.weapType;
 	this.modify = args.modify;
 	this.unmodify = args.unmodify;
 	this.specialNum = args.specialNum;
@@ -34,7 +35,11 @@ function system(args)
 		if(this.damage>0)
 		{
 			pants+="<b>Damage:</b> D"+this.damage*multi+"<br/>";
-		}	
+		}
+		if(this.weapType)
+		{
+			pants+="<b>Type:</b> "+this.weapType+"<br/>";
+		}
 		if(this.hp>0)
 		{
 			var hpMulti = multi;
@@ -117,7 +122,10 @@ function ship()
 		//slot costs and system costs
 		for(j=0;j<this.systems.length;j++)
 		{
-			cost += typeCosts[this.systems[j].slotType]*this.systems[j].slotSize;
+			if(typeCosts[this.systems[j].slotType])
+			{
+				cost += typeCosts[this.systems[j].slotType]*this.systems[j].slotSize;
+			}
 			cost += systems[this.systems[j].systemId].price*sizeToMulti(this.systems[j].size);
 		}
 		//missile costs
@@ -214,24 +222,24 @@ typeCosts["Engine"]=500;
 typeCosts["Special"]=0;
 
 var systems = new Array();
-systems[0]=new system({type:"Weapon", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
-systems[1]=new system({type:"Weapon", name:"18 MW Laser Cannon", price:2500, damage:5, hp:8, special:"Sustained Fire %s", specialNum:1});
-systems[2]=new system({type:"Weapon", name:"Military Laser Cannon", price:8000, damage:10, hp:16, special:"Sustained Fire %s", specialNum:1});
-systems[3]=new system({type:"Weapon", name:"20mm Vulcan", price:1800, damage:2, hp:8, special:"3 shots per turn, Ammo max 6"});
-systems[4]=new system({type:"Weapon", name:"45mm Vulcan", price:4500, damage:4, hp:8, special:"3 shots per turn, Ammo max 5"});
-systems[5]=new system({type:"Weapon", name:"92mm Vulcan", price:8000, damage:7, hp:8, special:"3 shots per turn, Ammo max 4"});
-systems[6]=new system({type:"Weapon", name:"20MW Light Plasma Cannon", price:5500, damage:9, hp:8});
-systems[7]=new system({type:"Weapon", name:"40MW Plasma Cannon", price:8500, damage:12, hp:10});
-systems[8]=new system({type:"Weapon", name:"80MW Military Plasma Cannon", price:18000, damage:18});
-systems[9]=new system({type:"Weapon", name:"Ion Rail", price:14000, damage:16, hp:8});
-systems[10]=new system({type:"Weapon", name:"Pulse Ion Rail", price:8000, damage:15, hp:8, special:"Fires Every Other Turn"});
-systems[11]=new system({type:"Weapon", name:"160mm Howitzer", price:4500, damage:8, hp:6, special:"Ammo max 4"});
-systems[12]=new system({type:"Weapon", name:"Rail Gun", price:28000, damage:24, hp:8});
-systems[13]=new system({type:"Weapon", name:"Cratermaster Cannon", price:75000, damage:4, hp:4, special:"Inflicts damage on first three systems. Ignores shields and armor DR."});
-systems[14]=new system({type:"Weapon", name:"Cratermaster Mk II", price:125000, damage:12, hp:4, special:"Hits target system regardless of intervening systems"});
-systems[15]=new system({type:"Weapon", name:"Quasiprotonic Disrupter", price:70000, damage:40, hp:8});
-systems[16]=new system({type:"Weapon", name:"Negatizer Beam", price:450000, damage:100, hp:8, special:"Ignores armor DR"});
-systems[17]=new system({type:"Weapon", name:"Tether Cable", price:5000, hp:12, special:"-2 to hit. Board at end of turn on successful hit."});
+systems[0]=new system({type:"Weapon", weapType:"Laser", name:"10 MW Laser Cannon", price:1000, damage:3, hp:8, special:"Sustained Fire %s", specialNum:1});
+systems[1]=new system({type:"Weapon", weapType:"Laser", name:"18 MW Laser Cannon", price:2500, damage:5, hp:8, special:"Sustained Fire %s", specialNum:1});
+systems[2]=new system({type:"Weapon", weapType:"Laser", name:"Military Laser Cannon", price:8000, damage:10, hp:16, special:"Sustained Fire %s", specialNum:1});
+systems[3]=new system({type:"Weapon", weapType:"Kinetic", name:"20mm Vulcan", price:1800, damage:2, hp:8, special:"3 shots per turn, Ammo max 6"});
+systems[4]=new system({type:"Weapon", weapType:"Kinetic", name:"45mm Vulcan", price:4500, damage:4, hp:8, special:"3 shots per turn, Ammo max 5"});
+systems[5]=new system({type:"Weapon", weapType:"Kinetic", name:"92mm Vulcan", price:8000, damage:7, hp:8, special:"3 shots per turn, Ammo max 4"});
+systems[6]=new system({type:"Weapon", weapType:"Plasma", name:"20MW Light Plasma Cannon", price:5500, damage:9, hp:8});
+systems[7]=new system({type:"Weapon", weapType:"Plasma", name:"40MW Plasma Cannon", price:8500, damage:12, hp:10});
+systems[8]=new system({type:"Weapon", weapType:"Plasma", name:"80MW Military Plasma Cannon", price:18000, damage:18});
+systems[9]=new system({type:"Weapon", weapType:"Kinetic Plasma", name:"Ion Rail", price:14000, damage:16, hp:8});
+systems[10]=new system({type:"Weapon", weapType:"Kinetic Plasma", name:"Pulse Ion Rail", price:8000, damage:15, hp:8, special:"Fires Every Other Turn"});
+systems[11]=new system({type:"Weapon", weapType:"Kinetic", name:"160mm Howitzer", price:4500, damage:8, hp:6, special:"Ammo max 4"});
+systems[12]=new system({type:"Weapon", weapType:"Kinetic", name:"Rail Gun", price:28000, damage:24, hp:8});
+systems[13]=new system({type:"Weapon", weapType:"Quantum Wave", name:"Cratermaster Cannon", price:75000, damage:4, hp:4, special:"Inflicts damage on first three systems. Ignores shields and armor DR."});
+systems[14]=new system({type:"Weapon", weapType:"Quantum Gravity Wave", name:"Cratermaster Mk II", price:125000, damage:12, hp:4, special:"Hits target system regardless of intervening systems"});
+systems[15]=new system({type:"Weapon", weapType:"Quantum Antimatter Wave", name:"Quasiprotonic Disrupter", price:70000, damage:40, hp:8});
+systems[16]=new system({type:"Weapon", weapType:"Quantum Antimatter Wave", name:"Negatizer Beam", price:450000, damage:100, hp:8, special:"Ignores armor DR"});
+systems[17]=new system({type:"Weapon", weapType:"Cable", name:"Tether Cable", price:5000, hp:12, special:"-2 to hit. Board at end of turn on successful hit."});
 systems[18]=new system({type:"Engine", name:"Generic Thruster", price:1500, hp:6,modify:function(multi){ship.thrust = ship.thrust + 2*multi;}, unmodify:function(multi){ship.thrust = ship.thrust - 2*multi;}, special:"<b>Thrust:</b> %s", specialNum:2});
 systems[19]=new system({type:"Engine", name:"Hellforce Taurus", price:3200, hp:10,modify:function(multi){ship.thrust = ship.thrust + 3*multi;},unmodify:function(multi){ship.thrust = ship.thrust - 3*multi;}, special:"<b>Thrust:</b> %s", specialNum:3});
 systems[20]=new system({type:"Engine", name:"Hellforce Thunderhead", price:5000, hp:10,modify:function(multi){ship.thrust = ship.thrust + 4*multi;},unmodify:function(multi){ship.thrust = ship.thrust - 4*multi;}, special:"<b>Thrust:</b> %s", specialNum:4});
@@ -282,7 +290,7 @@ systems[48]=new system({type:"Shield", name:"Griffin Generator", price:40000, hp
 systems[49]=new system({type:"Shield", name:"Hydra Generator", price:145000, hp:8, modify:genShieldModify(80,14), unmodify:genShieldUnmodify(80,14),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:80,specialNum2:14});
 systems[50]=new system({type:"Shield", name:"Firestorm Support Generator", price:27000, hp:8, modify:genShieldModify(0,20), unmodify:genShieldUnmodify(0,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:0,specialNum2:20});
 systems[51]=new system({type:"Shield", name:"Military Generator", price:310000, hp:10, modify:genShieldModify(120,20), unmodify:genShieldUnmodify(120,20),special:"<b>Shields:</b> %s <b>Regen:</b> %t",specialNum:120,specialNum2:20});
-systems[42]=new system({type:"Weapon", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[42]=new system({type:"Weapon", weapType:"Missile", price:1000, name:"Missile Rack", hp:4, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
 systems[52]=new system({type:"Cargo", name:"Cargo Bay", price:400, hp:8, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
 systems[53]=new system({type:"Cargo", name:"Autoloading Bay", price:8000, hp:8, modify:function(multi){ship.cargo = ship.cargo + 4*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 4*multi;}});
 systems[54]=new system({type:"Cargo", name:"Armored Cargo Bay", price:10000, hp:16, dr:2, modify:function(multi){ship.cargo = ship.cargo + 2*multi;}, unmodify:function(multi){ship.cargo = ship.cargo - 2*multi;}});
@@ -292,10 +300,10 @@ systems[57]=new system({type:"Cargo", name:"Passenger Cabin", price:2000, hp:8, 
 systems[58]=new system({type:"Cargo", name:"Bunk Cabin", price:2500, hp:8, modify:function(multi){ship.crew = ship.crew + 3*multi;}, unmodify:function(multi){ship.crew = ship.crew - 3*multi;}});
 systems[59]=new system({type:"Cargo", name:"Deluxe Passenger Cabin", price:10000, hp:6, modify:function(multi){ship.crew = ship.crew + 1*multi;}, unmodify:function(multi){ship.crew = ship.crew - 1*multi;}});
 systems[67]=new system({type:"Special", name:"Ground Scanner", price:500, special:"Intensity +3 for scanning planet surface"});
-systems[60]=new system({type:"Weapon", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
-systems[61]=new system({type:"Weapon", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
-systems[62]=new system({type:"Weapon", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
-systems[63]=new system({type:"Weapon", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/round"});
+systems[60]=new system({type:"Weapon", weapType:"Missile", name:"Missile Launcher", price:1500, hp:8, special:"Holds %s missiles", specialNum:4, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[61]=new system({type:"Weapon", weapType:"Missile", name:"Cyclic Missile Launcher", price:4500, hp:8, special:"Holds %s missiles", specialNum:8, modify:function(multi, id){createMissileRack(id,8*multi);}, unmodify:function(multi, id){removeMissileRack(id);}});
+systems[62]=new system({type:"Weapon", weapType:"Missile", name:"Bale Missile Rack", price:5000, hp:8, special:"Holds %s missiles", specialNum:3, modify:function(multi, id){createMissileRack(id,3*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/turn"});
+systems[63]=new system({type:"Weapon", weapType:"Missile", name:"Stormcrow Missile Launcher", price:12000, hp:8, special:"Holds %s missiles", specialNum:6, modify:function(multi, id){createMissileRack(id,4*multi);}, unmodify:function(multi, id){removeMissileRack(id);}, additionalDisplay:"Fires 3/round"});
 systems[64]=new system({type:"Special", name:"High-Grade Sensor Array", price:500, special:"Intensity 2", modify:function(){ship.sensors += 2;}, unmodify:function(){ship.sensors -= 2;}});
 systems[65]=new system({type:"Special", name:"Advanced Sensor Array", price:15000, special:"Intensity 4<br/>un-Bend one scanner or targeter per turn", modify:function(){ship.sensors += 4;},unmodify:function(){ship.sensors -= 4;}});
 systems[66]=new system({type:"Special", name:"Hyper Sensor Array", price:150000, special:"Intensity 8<br/>un-Bend 2 scanners or targeters per turn", modify:function(){ship.sensors += 8;},unmodify:function(){ship.sensors -= 8;}});
@@ -470,10 +478,16 @@ function calculateExtraSpecialSlotCost()
 	return extraCost;
 }
 
-function addSlot(id)
+function addSlot(id, slotType, systemPredicate)
 {
+	if(!systemPredicate)
+		systemPredicate = function(x) { return systems[x].type==value || (value=="Universal" && x!=41 && systems[x].type != "Special"); }
 	var multi = 1;
-	var value = document.getElementById("slotSelect"+id).options[document.getElementById("slotSelect"+id).selectedIndex].value;
+	var value;
+	if(slotType)
+		value = slotType;
+	else
+		value = document.getElementById("slotSelect"+id).options[document.getElementById("slotSelect"+id).selectedIndex].value;
 	if(value.indexOf("HEAVY")!=-1)
 	{	
 		value = value.substr(0, value.indexOf("|"));
@@ -483,7 +497,7 @@ function addSlot(id)
 	{
 		value = value.substr(0, value.indexOf("|"));
 		multi = 4;
-	}		
+	}	
 	var select ="<div id=\"slot"+i+"\" class=\""+value+"\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, ";	
 	select+="getSystemSize("+i+"));\"><b>";
 	if(multi>2)
@@ -508,15 +522,22 @@ function addSlot(id)
 	select += "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 	for(x=0; x<systems.length; x++)
 	{
-		if(systems[x].type==value || (value=="Universal" && x!=41 && systems[x].type != "Special"))
+		if(systemPredicate(x))
 		{
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
 	}
-	select+="</select>";
+	select+="</select>";	
+	if(slotType == 'Turreted Weapon')
+		multi = 2;
 	select+=buildSizeSelect(multi);
 	select+="</div>";
 	$("#"+id).append(select);
+	if(slotType == 'Turreted Weapon')
+	{		
+		$("#sizeSelect"+i)[0].selectedIndex=1;
+		$("#sizeSelect"+i+" .syssize").hide();
+	}
 	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:id, size:1, slotSize:multi, slotType:value}));
 	i++;
 	updateCostDisplay();
@@ -534,11 +555,11 @@ function buildSizeSelect(multi)
 	}
 	else
 	{
-		sl += "<select id=\"sizeSelect"+i+"\" onchange=\"onSlotChange("+i+");\"><option value=\"1\">Normal</option><option value=\"2\" class=\"turret\">Turreted</option><option value=\"3\">Heavy</option>";
+		sl += "<select id=\"sizeSelect"+i+"\" onchange=\"onSlotChange("+i+");\"><option value=\"1\" class=\"syssize\">Normal</option><option value=\"2\" class=\"turret\">Turreted</option><option value=\"3\" class=\"syssize\">Heavy</option>";
 	}
 	if(multi>2)
 	{
-		sl += "<option value=\"4\" class=\"turret\">Heavy Turreted</option><option value=\"5\">Super Heavy</option>"
+		sl += "<option value=\"4\" class=\"turret\">Heavy Turreted</option><option value=\"5\" class=\"syssize\">Super Heavy</option>"
 	}
 	sl +="</select>";
 	return sl;
@@ -791,6 +812,31 @@ function changeSystemSize(id)
 	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
 }
 
+function missilesOnly(x)
+{
+	return systems[x].weapType == "Missile";
+}
+function addMissileSlot(facing)
+{
+	addSlot(facing, 'Missile', missilesOnly);
+}
+
+function missilesAndAmmoOnly(x)
+{
+	if(systems[x].special)
+		return missilesOnly(x) || (systems[x].type == 'Weapon' && systems[x].special.indexOf('Ammo') != -1);
+	return false;
+}
+function addMissileAmmoSlot(facing)
+{
+	addSlot(facing, 'Ammo/Missile Weapon', missilesAndAmmoOnly);
+}
+
+function addTurretSlot(facing)
+{
+	addSlot(facing, 'Turreted Weapon', function(x) { return systems[x].type == 'Weapon'; });
+}
+
 function remCrew()
 {
 	ship.crewToSize += 1;
@@ -801,6 +847,6 @@ function addCrew()
 {
 	ship.crewToSize -= 1;
 	if(ship.crewToSize < 1)
-		document.getElementById('addCrew').style.display = 'none';
+		$('#addCrew').hide();
 	populateShipInfo();
 }
