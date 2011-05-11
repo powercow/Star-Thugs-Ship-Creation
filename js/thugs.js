@@ -478,8 +478,10 @@ function calculateExtraSpecialSlotCost()
 	return extraCost;
 }
 
-function addSlot(id, slotType, systemPredicate)
+function addSlot(id, slotType, systemPredicate, checkCoreOuter)
 {
+	if(checkCoreOuter != false)
+		checkCoreOuter = true;
 	if(!systemPredicate)
 		systemPredicate = function(x) { return systems[x].type==value || (value=="Universal" && x!=41 && systems[x].type != "Special"); }
 	var multi = 1;
@@ -509,12 +511,12 @@ function addSlot(id, slotType, systemPredicate)
 		select+="Heavy ";
 	}
 	select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
-	if(id=="core" && !canAdd('core',multi))
+	if(checkCoreOuter && id=="core" && !canAdd('core',multi))
 	{
 		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
 		return false;
 	}	
-	if(id=="outer" && !canAdd('outer',multi))
+	if(checkCoreOuter && id=="outer" && !canAdd('outer',multi) && checkCoreOuter)
 	{
 		alert("You cannot have more outer slots than you have slots in front, left, right, or rear");
 		return false;
@@ -842,6 +844,7 @@ function remCrew()
 	ship.crewToSize += 1;
 	$("#addCrew").show();
 	populateShipInfo();
+	updateCostDisplay();
 }
 function addCrew()
 {
@@ -849,4 +852,5 @@ function addCrew()
 	if(ship.crewToSize < 1)
 		$('#addCrew').hide();
 	populateShipInfo();
+	updateCostDisplay();
 }
