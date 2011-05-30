@@ -406,30 +406,19 @@ function populateSlotDropdown(id)
 		select+="<option value='"+types[x]+"|||HEAVY'>Heavy "+types[x]+"</option>";
 		select+="<option value='"+types[x]+"|||SUPER'>Super Heavy "+types[x]+"</option>";
 	}
-	select+="</select><a href=\"#\" onclick=\"addSlot('"+id+"');\">add</a> ";
+	select+="</select><a href=\"#\" onclick=\"addClick('"+id+"');\">add</a> ";
 	$("#"+id).append(select);
 }
 
 function populateSpecials()
 {
 	var sselect = "";
-	var specials = $("#special .specialSlot");
+	var specials = $("#special .Special");
 	if(specials.length < ship.calculateSize())
 	{
 		for(x=specials.length; x<ship.calculateSize(); x++)
 		{
-			sselect+="<div id=\"slot"+i+"\" class=\"specialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
-			for(y=0; y<systems.length;y++)
-			{
-				if(systems[y].type=="Special")
-				{
-					sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
-				}
-			}
-			sselect+="</select></div>";
-			$("#special").append(sselect);
-			ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'special', size:1, slotSize:0, slotType:"Special"}));
-			i++;
+			addSlot('Special','special',0,false);
 		}
 	}
 	else
@@ -450,25 +439,13 @@ function populateSpecials()
 
 function addSpecialSlot()
 {
-	var sselect="<div id=\"slot"+i+"\" class=\"extraSpecialSlot\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, 1);\"><b>Special Slot:</b></span><select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
-	for(y=0; y<systems.length;y++)
-	{
-		if(systems[y].type=="Special")
-		{
-			sselect+="<option value='"+y+"'>"+systems[y].name+"</option>";
-		}
-	}
-	sselect+="</select><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></div>";
-	$("#special").append(sselect);
-	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:'extraSpecial', size:1, slotSize:0, slotType:"Special"}));
-	updateCostDisplay();
-	i++;
+	addSlot('extraSpecial','extraSpecial', 0, true);
 }
 
 function calculateExtraSpecialSlotCost()
 {
-	var naturalSpecial = $("#special .specialSlot").length;
-	var extraSpecial = $("#special .extraSpecialSlot").length;
+	var naturalSpecial = $("#special .Special").length;
+	var extraSpecial = $("#special .extraSpecial").length;
 	var extraCost = 0;
 	for(y=0; y<extraSpecial;y++)
 	{
@@ -478,18 +455,11 @@ function calculateExtraSpecialSlotCost()
 	return extraCost;
 }
 
-function addSlot(id, slotType, systemPredicate, checkCoreOuter)
+function addClick(id)
 {
-	if(checkCoreOuter != false)
-		checkCoreOuter = true;
-	if(!systemPredicate)
-		systemPredicate = function(x) { return systems[x].type==value || (value=="Universal" && x!=41 && systems[x].type != "Special"); }
+	var value = document.getElementById("slotSelect"+id).options[document.getElementById("slotSelect"+id).selectedIndex].value;
+	
 	var multi = 1;
-	var value;
-	if(slotType)
-		value = slotType;
-	else
-		value = document.getElementById("slotSelect"+id).options[document.getElementById("slotSelect"+id).selectedIndex].value;
 	if(value.indexOf("HEAVY")!=-1)
 	{	
 		value = value.substr(0, value.indexOf("|"));
@@ -499,8 +469,18 @@ function addSlot(id, slotType, systemPredicate, checkCoreOuter)
 	{
 		value = value.substr(0, value.indexOf("|"));
 		multi = 4;
-	}	
-	var select ="<div id=\"slot"+i+"\" class=\""+value+"\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, ";	
+	}
+	if (!canAdd(id, multi))
+	{
+		alert('You cannot have more '+id+' slots than you have slots in front, left, right, or rear.');
+		return;
+	}
+	addSlot(value, id, multi, true);
+}
+
+function addSlot(type, facing, multi, removeable)
+{	
+	var select ="<div id=\"slot"+i+"\" class=\""+type+"\"><span id=\"description"+i+"\" title=\"click to display information\" class=\"description\" onclick=\"populateInformationDiv(document.getElementById('systemSelect"+i+"').options[document.getElementById('systemSelect"+i+"').selectedIndex].value, ";	
 	select+="getSystemSize("+i+"));\"><b>";
 	if(multi>2)
 	{
@@ -510,18 +490,86 @@ function addSlot(id, slotType, systemPredicate, checkCoreOuter)
 	{
 		select+="Heavy ";
 	}
-	select+=value+" Slot:</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a></span><br/>";
-	if(checkCoreOuter && id=="core" && !canAdd('core',multi))
+	if(type=='extraSpecial')
 	{
-		alert("You cannot have more core slots than you have slots in front, left, right, or rear");
-		return false;
-	}	
-	if(checkCoreOuter && id=="outer" && !canAdd('outer',multi) && checkCoreOuter)
-	{
-		alert("You cannot have more outer slots than you have slots in front, left, right, or rear");
-		return false;
+		select += "Extra Special Slot";
 	}
-	select += "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
+	else
+	{
+		select+=type+" Slot";
+	}
+	if(removeable)
+	{
+		select += ":</b><a href=\"#\" onClick=\"removeSlot("+i+");\">remove</a>";
+	}
+	else
+	{
+		select += "</b>";
+	}
+	select += "</span><br/>";
+	select += buildSystemSelect(type, multi);
+	select += "</div>";
+	if(facing == 'extraSpecial')
+	{
+		$("#special").append(select);
+	}
+	else
+	{
+		$("#"+facing).append(select);
+	}
+	if(type == 'Turreted Weapon')
+	{		
+		$("#sizeSelect"+i)[0].selectedIndex=1;
+		$("#sizeSelect"+i+" .syssize").hide();
+	}
+	
+	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:facing, size:1, slotSize:multi, slotType:type}));
+	
+	i++;
+	updateCostDisplay();
+	populateSpecials();
+	populateShipInfo();
+}
+
+function canAdd(fid, multi)
+{
+	if (fid != 'core' && fid != 'outer')
+		return true;
+	var minSlots = calcFacingSlots('right');
+	if(calcFacingSlots('left')<minSlots){minSlots = calcFacingSlots('left');}
+	if(calcFacingSlots('front')<minSlots){minSlots = calcFacingSlots('front');}
+	if(calcFacingSlots('rear')<minSlots){minSlots = calcFacingSlots('rear');}
+	return (calcFacingSlots(fid)+multi <= minSlots);
+}
+
+function buildSystemSelect(type, multi)
+{
+	var rtn='';
+	switch (type)
+	{
+	case 'Missile':
+		rtn+=populateSystemSelect(function(x) { return systems[x].weapType == "Missile"; });
+		break;
+	case 'Ammo/Missile Weapon':
+		rtn+=populateSystemSelect(function(x) { return systems[x].weapType == "Missile" || (systems[x].type == 'Weapon' && systems[x].special.indexOf('Ammo') != -1) });
+		break;
+	case 'Turreted Weapon':
+		rtn+=populateSystemSelect(function(x) { return systems[x].type=='Weapon'; });
+		multi=2;
+		break;
+	case 'extraSpecial':
+		rtn+=populateSystemSelect(function(x) { return systems[x].type=='Special'; });
+		break;
+	default:
+		rtn+=populateSystemSelect(function(x) { return systems[x].type==type || (type=="Universal" && x!=41 && systems[x].type != "Special"); });
+	}
+	rtn+=buildSizeSelect(multi)
+	return rtn;
+}
+
+function populateSystemSelect(systemPredicate)
+{	
+	var select = "<select id=\"systemSelect"+i+"\" onchange=\"onSlotChange('"+i+"');\"><option value=\"41\">EMPTY</option>";
 	for(x=0; x<systems.length; x++)
 	{
 		if(systemPredicate(x))
@@ -529,22 +577,8 @@ function addSlot(id, slotType, systemPredicate, checkCoreOuter)
 			select+="<option value='"+x+"'>"+systems[x].name+"</option>";
 		}
 	}
-	select+="</select>";	
-	if(slotType == 'Turreted Weapon')
-		multi = 2;
-	select+=buildSizeSelect(multi);
-	select+="</div>";
-	$("#"+id).append(select);
-	if(slotType == 'Turreted Weapon')
-	{		
-		$("#sizeSelect"+i)[0].selectedIndex=1;
-		$("#sizeSelect"+i+" .syssize").hide();
-	}
-	ship.systems.push(new shipSystem({slotId:i, systemId:41, facing:id, size:1, slotSize:multi, slotType:value}));
-	i++;
-	updateCostDisplay();
-	populateSpecials();
-	populateShipInfo();
+	select+="</select>";
+	return select;
 }
 
 //Function's pretty simple now, if crew gets added to this it may get more complex.
@@ -589,8 +623,8 @@ function removeSlot(id)
 		systems[oldSys.systemId].unmodify(sizeToMulti(oldSys.size), id);
 	}
 	ship.systems.splice(syskey,1);
-	updateCostDisplay();
 	$("#slot"+id).remove();
+	updateCostDisplay();
 	populateSpecials();
 	populateShipInfo();	
 }
@@ -710,15 +744,6 @@ function calcFacingSlots(fid)
 	return num;
 }
 
-function canAdd(fid, multi)
-{
-	var minSlots = calcFacingSlots('right');
-	if(calcFacingSlots('left')<minSlots){minSlots = calcFacingSlots('left');}
-	if(calcFacingSlots('front')<minSlots){minSlots = calcFacingSlots('front');}
-	if(calcFacingSlots('rear')<minSlots){minSlots = calcFacingSlots('rear');}
-	return (calcFacingSlots(fid)+multi <= minSlots);
-}
-
 function getMissileKeyById(id)
 {
 	for(j=0;j<ship.missiles.length;j++)
@@ -814,43 +839,20 @@ function changeSystemSize(id)
 	populateInformationDiv(document.getElementById("systemSelect"+id).options[document.getElementById("systemSelect"+id).selectedIndex].value, document.getElementById("sizeSelect"+id).options[document.getElementById("sizeSelect"+id).selectedIndex].value);
 }
 
-function missilesOnly(x)
-{
-	return systems[x].weapType == "Missile";
-}
-function addMissileSlot(facing)
-{
-	addSlot(facing, 'Missile', missilesOnly);
-}
-
-function missilesAndAmmoOnly(x)
-{
-	if(systems[x].special)
-		return missilesOnly(x) || (systems[x].type == 'Weapon' && systems[x].special.indexOf('Ammo') != -1);
-	return false;
-}
-function addMissileAmmoSlot(facing)
-{
-	addSlot(facing, 'Ammo/Missile Weapon', missilesAndAmmoOnly);
-}
-
-function addTurretSlot(facing)
-{
-	addSlot(facing, 'Turreted Weapon', function(x) { return systems[x].type == 'Weapon'; });
-}
-
 function remCrew()
 {
 	ship.crewToSize += 1;
 	$("#addCrew").show();
-	populateShipInfo();
 	updateCostDisplay();
+	populateSpecials();
+	populateShipInfo();	
 }
 function addCrew()
 {
 	ship.crewToSize -= 1;
 	if(ship.crewToSize < 1)
 		$('#addCrew').hide();
-	populateShipInfo();
 	updateCostDisplay();
+	populateSpecials();
+	populateShipInfo();	
 }
